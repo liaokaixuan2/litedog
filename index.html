@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiteDog · 网站检测工具</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='82' font-size='82'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --blue:#2f6bed; --blue-dark:#2456c4; --bg:#f3f6fb; --card:#fff;
+  --text:#1e293b; --muted:#64748b; --line:#e2e8f0; --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);}
+.wrap{max-width:940px;margin:0 auto;padding:0 16px;}
+header{background:#fff;border-bottom:1px solid var(--line);}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:58px;}
+.logo{font-size:20px;display:flex;align-items:baseline;gap:2px;}
+.logo b{font-weight:700;}
+.logo .sub{font-size:13px;color:var(--muted);margin-left:6px;}
+.node-badge{font-size:12px;color:var(--blue);background:#eef3ff;border:1px solid #d6e0ff;padding:4px 12px;border-radius:999px;white-space:nowrap;}
+main{padding:20px 0 30px;}
+.tabs{display:flex;gap:6px;background:#e8edf5;padding:6px;border-radius:12px;margin-bottom:16px;overflow-x:auto;}
+.tab{flex:1;border:0;background:transparent;padding:9px 14px;border-radius:9px;font-size:14px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500;font-family:inherit;}
+.tab.active{background:#fff;color:var(--blue);font-weight:600;box-shadow:0 1px 3px rgba(15,23,42,.08);}
+.panel{display:none;}
+.panel.active{display:block;}
+.controls{display:flex;gap:10px;background:var(--card);padding:14px;border-radius:var(--radius);box-shadow:0 1px 3px rgba(15,23,42,.06);flex-wrap:wrap;}
+.controls input[type=text],.controls input[type=number]{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;outline:none;min-width:0;}
+.controls input.grow{flex:1;}
+.controls input[type=text]:focus,.controls input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,107,237,.12);}
+.controls select{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;font-size:14px;}
+.btn{border:0;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer;font-weight:600;font-family:inherit;}
+.btn.primary{background:var(--blue);color:#fff;}
+.btn.primary:hover{background:var(--blue-dark);}
+.btn:disabled{opacity:.55;cursor:not-allowed;}
+.hint{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:10px 2px;font-size:13px;color:var(--muted);}
+.hint label{display:flex;align-items:center;gap:5px;color:var(--text);cursor:pointer;}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin:0 2px 4px;}
+.quick span{font-size:12px;color:var(--blue);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;}
+.quick span:hover{border-color:var(--blue);}
+.error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 14px;border-radius:8px;margin:12px 0;font-size:13px;}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--muted);box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.chip b{color:var(--text);font-weight:600;margin-right:2px;}
+.result-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;margin:10px 0;box-shadow:0 1px 3px rgba(15,23,42,.06);animation:fade .35s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.result-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+.result-title{font-size:14px;font-weight:600;}
+.result-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap;}
+.badge-ok{background:#ecfdf5;color:#059669;}
+.badge-warn{background:#fffbeb;color:#b45309;}
+.badge-fail{background:#fef2f2;color:#b91c1c;}
+.badge-off{background:#f1f5f9;color:#64748b;}
+.total-ms{font-size:15px;font-weight:700;}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-bottom:10px;}
+.metric{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.metric-value{font-size:14px;font-weight:600;word-break:break-all;}
+.bar{height:6px;background:#eef2f7;border-radius:4px;overflow:hidden;}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--blue);}
+.console{background:#0f172a;color:#cbd5e1;font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:13px;line-height:2;border-radius:var(--radius);padding:16px 18px;max-height:430px;overflow-y:auto;margin:12px 0;}
+.console .ok{color:#4ade80;}
+.console .fail{color:#f87171;}
+.console .dim{color:#64748b;}
+.record-list{display:flex;flex-direction:column;gap:6px;}
+.record-item{background:#f8fafc;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:13px;word-break:break-all;}
+.mono{font-family:ui-monospace,Consolas,monospace;}
+.muted{color:var(--muted);}
+table.port-table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.06);}
+table.port-table th,table.port-table td{padding:9px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--line);}
+table.port-table th{background:#f8fafc;color:var(--muted);font-weight:500;}
+table.port-table tr:last-child td{border-bottom:0;}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13px;margin:0;}
+.kv dt{color:var(--muted);}
+.kv dd{margin:0;word-break:break-all;}
+.redirect-chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;font-size:12px;}
+.redirect-chain .step{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 10px;}
+.arrow{color:var(--muted);}
+details{margin-top:10px;}
+summary{cursor:pointer;font-size:13px;color:var(--blue);}
+.empty{text-align:center;color:var(--muted);padding:30px 0;font-size:14px;}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 16px 44px;line-height:1.9;}
+footer a{color:var(--blue);text-decoration:none;}
+@media (max-width:600px){
+  .controls .btn{flex:1;}
+  .tab{padding:9px 10px;font-size:13px;}
+  .kv{grid-template-columns:96px 1fr;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap header-inner">
+    <div class="logo">⚡<b>LiteDog</b><span class="sub">网站检测 · 测速 / Ping / DNS / 端口</span></div>
+    <div class="node-badge" id="nodeBadge">检测节点：识别中…</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs">
+    <button class="tab active" data-tab="http">网站测速</button>
+    <button class="tab" data-tab="ping">Ping 测试</button>
+    <button class="tab" data-tab="dns">DNS 查询</button>
+    <button class="tab" data-tab="port">端口检测</button>
+    <button class="tab" data-tab="headers">HTTP 检测</button>
+  </nav>
+
+  <!-- 网站测速 -->
+  <section class="panel active" id="panel-http">
+    <div class="quick">
+      <span onclick="setTarget('httpUrl','https://www.baidu.com')">baidu.com</span>
+      <span onclick="setTarget('httpUrl','https://www.qq.com')">qq.com</span>
+      <span onclick="setTarget('httpUrl','https://github.com')">github.com</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="httpUrl" class="grow" placeholder="输入网址，如 https://www.example.com" spellcheck="false">
+      <select id="httpTimes">
+        <option value="1">1 次</option>
+        <option value="2">2 次</option>
+        <option value="3" selected>3 次</option>
+        <option value="5">5 次</option>
+      </select>
+      <button class="btn primary" id="httpBtn">开始检测</button>
+    </div>
+    <div class="hint">
+      <label><input type="checkbox" id="useServerNode" checked> 服务器节点（详细分解）</label>
+      <label><input type="checkbox" id="useBrowserNode" checked> 浏览器本地节点（仅总耗时）</label>
+    </div>
+    <div class="error" id="httpError" hidden></div>
+    <div class="summary" id="httpSummary" hidden></div>
+    <div id="httpResults"></div>
+  </section>
+
+  <!-- Ping -->
+  <section class="panel" id="panel-ping">
+    <div class="quick">
+      <span onclick="setTarget('pingHost','www.baidu.com')">baidu.com</span>
+      <span onclick="setTarget('pingHost','www.qq.com')">qq.com</span>
+      <span onclick="setTarget('pingHost','1.1.1.1')">1.1.1.1</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="pingHost" class="grow" placeholder="域名或 IP，如 www.example.com" spellcheck="false">
+      <input type="number" id="pingPort" value="443" min="1" max="65535" style="width:96px" title="TCP 端口">
+      <select id="pingCount">
+        <option value="4" selected>4 次</option>
+        <option value="8">8 次</option>
+        <option value="10">10 次</option>
+      </select>
+      <button class="btn primary" id="pingBtn">开始检测</button>
+    </div>
+    <div class="hint">基于 TCP 握手模拟 Ping（服务器节点发起），443=HTTPS / 80=HTTP</div>
+    <div class="error" id="pingError" hidden></div>
+    <div class="summary" id="pingSummary" hidden></div>
+    <div class="console" id="pingConsole" hidden></div>
+  </section>
+
+  <!-- DNS -->
+  <section class="panel" id="panel-dns">
+    <div class="quick">
+      <span onclick="setTarget('dnsHost','www.baidu.com')">baidu.com</span>
+      <span onclick="setTarget('dnsHost','github.com')">github.com</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="dnsHost" class="grow" placeholder="域名，如 example.com" spellcheck="false">
+      <select id="dnsType">
+        <option value="ALL" selected>全部类型</option>
+        <option value="A">A</option>
+        <option value="AAAA">AAAA</option>
+        <option value="CNAME">CNAME</option>
+        <option value="MX">MX</option>
+        <option value="NS">NS</option>
+        <option value="TXT">TXT</option>
+        <option value="SOA">SOA</option>
+        <option value="CAA">CAA</option>
+      </select>
+      <button class="btn primary" id="dnsBtn">开始查询</button>
+    </div>
+    <div class="error" id="dnsError" hidden></div>
+    <div id="dnsResults"></div>
+  </section>
+
+  <!-- 端口 -->
+  <section class="panel" id="panel-port">
+    <div class="controls">
+      <input type="text" id="portHost" class="grow" placeholder="域名或 IP" spellcheck="false">
+      <button class="btn primary" id="portBtn">开始检测</button>
+    </div>
+    <div class="hint">
+      <label><input type="radio" name="portMode" value="common" checked> 常用端口（20 个）</label>
+      <label><input type="radio" name="portMode" value="custom"> 自定义端口</label>
+      <input type="text" id="portList" placeholder="如 80,443,8080（最多 12 个）" style="flex:1;display:none" spellcheck="false">
+    </div>
+    <div class="error" id="portError" hidden></div>
+    <div class="summary" id="portSummary" hidden></div>
+    <div id="portResults"></div>
+  </section>
+
+  <!-- HTTP 检测 -->
+  <section class="panel" id="panel-headers">
+    <div class="quick">
+      <span onclick="setTarget('headersUrl','https://www.baidu.com')">baidu.com</span>
+      <span onclick="setTarget('headersUrl','https://httpbin.org/status/404')">httpbin 404</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="headersUrl" class="grow" placeholder="输入网址，如 https://www.example.com" spellcheck="false">
+      <button class="btn primary" id="headersBtn">开始检测</button>
+    </div>
+    <div class="error" id="headersError" hidden></div>
+    <div id="headersResults"></div>
+  </section>
+</main>
+
+<footer>
+  LiteDog · 轻量级网站检测工具，功能参考 itdog.cn，使用单个服务器节点与浏览器节点，结果仅供参考。<br>
+  运行于 Render 免费实例：闲置约 15 分钟后休眠，首次访问可能需等待约 1 分钟唤醒 ·
+  <a id="ghLink" href="https://github.com/liaokaixuan2/litedog" target="_blank" rel="noopener">GitHub 源码</a>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  window.setTarget = function (id, v) { document.getElementById(id).value = v; };
+
+  function fmtMs(v) {
+    if (v == null || isNaN(v)) return '—';
+    if (v >= 1000) return (v / 1000).toFixed(2) + ' s';
+    return Math.round(v * 10) / 10 + ' ms';
+  }
+  function fmtSize(v) {
+    if (v == null) return '—';
+    if (v >= 1048576) return (v / 1048576).toFixed(2) + ' MB';
+    if (v >= 1024) return (v / 1024).toFixed(1) + ' KB';
+    return v + ' B';
+  }
+  function msColor(v) {
+    if (v == null) return '#94a3b8';
+    if (v < 300) return '#16a34a';
+    if (v < 1000) return '#d97706';
+    return '#dc2626';
+  }
+  function badgeForStatus(st) {
+    var cls = st >= 400 ? 'badge badge-fail' : (st >= 300 ? 'badge badge-warn' : 'badge badge-ok');
+    return el('span', cls, 'HTTP ' + st);
+  }
+  function metric(label, value, color) {
+    var m = el('div', 'metric');
+    m.appendChild(el('div', 'metric-label', label));
+    var v = el('div', 'metric-value', value);
+    if (color) v.style.color = color;
+    m.appendChild(v);
+    return m;
+  }
+  function totalBar(ms) {
+    var bar = el('div', 'bar');
+    var fill = el('i');
+    fill.style.width = Math.max(2, Math.min(100, (ms / 3000) * 100)) + '%';
+    fill.style.background = msColor(ms);
+    bar.appendChild(fill);
+    return bar;
+  }
+  function chip(label, value, color) {
+    var c = el('span', 'chip');
+    c.appendChild(el('b', null, label));
+    var s = el('span', null, value);
+    if (color) s.style.color = color;
+    c.appendChild(s);
+    return c;
+  }
+  function clearPanel(panel) {
+    var box = panel.querySelector('.error');
+    box.hidden = true;
+    box.textContent = '';
+  }
+  function showError(panel, msg) {
+    var box = panel.querySelector('.error');
+    box.textContent = msg;
+    box.hidden = false;
+  }
+  function busy(btn, on, label) {
+    if (on) {
+      btn.setAttribute('data-label', btn.textContent);
+      btn.disabled = true;
+      btn.textContent = label || '检测中…';
+    } else {
+      btn.disabled = false;
+      btn.textContent = btn.getAttribute('data-label') || btn.textContent;
+    }
+  }
+  function timeoutSignal(ms) {
+    if (window.AbortSignal && AbortSignal.timeout) return AbortSignal.timeout(ms);
+    var c = new AbortController();
+    setTimeout(function () { c.abort(); }, ms);
+    return c.signal;
+  }
+  async function ndjson(res, onLine) {
+    if (res.body && res.body.getReader) {
+      var reader = res.body.getReader();
+      var dec = new TextDecoder();
+      var buf = '';
+      for (;;) {
+        var r = await reader.read();
+        if (r.done) break;
+        buf += dec.decode(r.value, { stream: true });
+        var idx;
+        while ((idx = buf.indexOf('\n')) >= 0) {
+          var line = buf.slice(0, idx).trim();
+          buf = buf.slice(idx + 1);
+          if (line) onLine(JSON.parse(line));
+        }
+      }
+      if (buf.trim()) onLine(JSON.parse(buf.trim()));
+    } else {
+      var text = await res.text();
+      text.split('\n').forEach(function (l) { l = l.trim(); if (l) onLine(JSON.parse(l)); });
+    }
+  }
+  function assertOk(resp) {
+    if (resp.ok) return Promise.resolve();
+    return resp.json().catch(function () { return {}; }).then(function (j) {
+      throw new Error(j.error || ('HTTP ' + resp.status));
+    });
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x === t); });
+      document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + t.getAttribute('data-tab')); });
+    });
+  });
+
+  // 节点徽标
+  fetch('/api/nodeinfo').then(function (r) { return r.json(); }).then(function (d) {
+    var label = d.region ? ('Render · ' + d.region) : (d.service ? 'Render · ' + d.service : '服务器节点');
+    $('#nodeBadge').textContent = '检测节点：' + label;
+  }).catch(function () { $('#nodeBadge').textContent = '检测节点：服务器节点'; });
+
+  /* ---------------- 网站测速 ---------------- */
+  var httpRunning = false;
+  async function browserProbe(url) {
+    var t0 = performance.now();
+    try {
+      await fetch(url, { mode: 'no-cors', cache: 'no-store', redirect: 'follow', signal: timeoutSignal(12000) });
+      var ms = performance.now() - t0;
+      var entry = null;
+      try {
+        var hostPart = url.split('//')[1] || url;
+        var es = performance.getEntriesByType('resource');
+        for (var i = es.length - 1; i >= 0; i--) {
+          if (es[i].name.indexOf(hostPart) !== -1) { entry = es[i]; break; }
+        }
+      } catch (e) { /* ignore */ }
+      return { ok: true, ms: entry && entry.duration > 0 ? Math.max(ms, entry.duration) : ms };
+    } catch (e) {
+      return { ok: false, ms: performance.now() - t0, error: (e.name === 'TimeoutError' || e.name === 'AbortError') ? '超时' : '网络错误' };
+    }
+  }
+  function renderServerResult(line, seq) {
+    var card = el('div', 'result-card');
+    var head = el('div', 'result-head');
+    head.appendChild(el('div', 'result-title', '服务器节点 · 第 ' + seq + ' 次'));
+    var right = el('div', 'result-right');
+    if (line.error) {
+      right.appendChild(el('span', 'badge badge-fail', line.error));
+      head.appendChild(right);
+      card.appendChild(head);
+      return card;
+    }
+    right.appendChild(badgeForStatus(line.status));
+    var t = el('span', 'total-ms', fmtMs(line.timings.total));
+    t.style.color = msColor(line.timings.total);
+    right.appendChild(t);
+    head.appendChild(right);
+    card.appendChild(head);
+    var grid = el('div', 'metric-grid');
+    grid.appendChild(metric('DNS 解析', fmtMs(line.timings.dns)));
+    grid.appendChild(metric('TCP 连接', fmtMs(line.timings.tcp)));
+    grid.appendChild(metric('TLS 握手', line.tls ? fmtMs(line.timings.tls) : '—'));
+    grid.appendChild(metric('首字节', fmtMs(line.timings.wait)));
+    grid.appendChild(metric('下载', fmtMs(line.timings.download)));
+    grid.appendChild(metric('传输大小', fmtSize(line.size) + (line.truncated ? ' +' : '')));
+    card.appendChild(grid);
+    card.appendChild(totalBar(line.timings.total));
+    return card;
+  }
+  function renderBrowserResult(r, seq) {
+    var card = el('div', 'result-card');
+    var head = el('div', 'result-head');
+    head.appendChild(el('div', 'result-title', '浏览器本地节点 · 第 ' + seq + ' 次'));
+    var right = el('div', 'result-right');
+    if (!r.ok) {
+      right.appendChild(el('span', 'badge badge-fail', r.error || '失败'));
+      head.appendChild(right);
+      card.appendChild(head);
+      return card;
+    }
+    right.appendChild(el('span', 'badge badge-ok', '可访问'));
+    var t = el('span', 'total-ms', fmtMs(r.ms));
+    t.style.color = msColor(r.ms);
+    right.appendChild(t);
+    head.appendChild(right);
+    card.appendChild(head);
+    card.appendChild(totalBar(r.ms));
+    return card;
+  }
+  async function runHttp() {
+    if (httpRunning) return;
+    var panel = $('#panel-http');
+    clearPanel(panel);
+    var url = $('#httpUrl').value.trim();
+    if (!/^https?:\/\//i.test(url)) { showError(panel, '请输入以 http:// 或 https:// 开头的完整网址'); return; }
+    var times = parseInt($('#httpTimes').value, 10) || 1;
+    var results = [];
+    var box = $('#httpResults');
+    box.innerHTML = '';
+    $('#httpSummary').hidden = true;
+    httpRunning = true;
+    busy($('#httpBtn'), true);
+    try {
+      if ($('#useServerNode').checked) {
+        var resp = await fetch('/api/http?url=' + encodeURIComponent(url) + '&times=' + times);
+        await assertOk(resp);
+        var seq = 0;
+        await ndjson(resp, function (line) {
+          if (line.type === 'error') throw new Error(line.error);
+          if (line.type === 'result') {
+            seq++;
+            box.appendChild(renderServerResult(line, seq));
+            results.push({ total: line.error ? null : line.timings.total, ok: !line.error });
+          }
+        });
+      }
+      if ($('#useBrowserNode').checked) {
+        for (var i = 1; i <= times; i++) {
+          var r = await browserProbe(url);
+          box.appendChild(renderBrowserResult(r, i));
+          results.push({ total: r.ok ? r.ms : null, ok: r.ok });
+        }
+      }
+      if (!results.length) { showError(panel, '请至少选择一个节点'); return; }
+      var okList = results.filter(function (x) { return x.ok && x.total != null; });
+      if (okList.length) {
+        var avg = okList.reduce(function (a, b) { return a + b.total; }, 0) / okList.length;
+        var min = Math.min.apply(null, okList.map(function (x) { return x.total; }));
+        var max = Math.max.apply(null, okList.map(function (x) { return x.total; }));
+        var sum = $('#httpSummary');
+        sum.innerHTML = '';
+        sum.appendChild(chip('成功', okList.length + '/' + results.length + ' 次'));
+        sum.appendChild(chip('平均', fmtMs(avg), msColor(avg)));
+        sum.appendChild(chip('最快', fmtMs(min), msColor(min)));
+        sum.appendChild(chip('最慢', fmtMs(max), msColor(max)));
+        sum.hidden = false;
+      }
+    } catch (e) {
+      showError(panel, '检测失败：' + e.message);
+    } finally {
+      httpRunning = false;
+      busy($('#httpBtn'), false);
+    }
+  }
+  $('#httpBtn').addEventListener('click', runHttp);
+  $('#httpUrl').addEventListener('keydown', function (e) { if (e.key === 'Enter') runHttp(); });
+
+  /* ---------------- Ping ---------------- */
+  var pingRunning = false;
+  function consoleLine(parts) {
+    var d = el('div');
+    parts.forEach(function (p) {
+      d.appendChild(el('span', p.cls || null, p.t));
+    });
+    return d;
+  }
+  async function runPing() {
+    if (pingRunning) return;
+    var panel = $('#panel-ping');
+    clearPanel(panel);
+    var host = $('#pingHost').value.trim();
+    var port = parseInt($('#pingPort').value, 10) || 443;
+    var count = parseInt($('#pingCount').value, 10) || 4;
+    if (!host) { showError(panel, '请输入域名或 IP'); return; }
+    var con = $('#pingConsole');
+    con.innerHTML = '';
+    con.hidden = false;
+    $('#pingSummary').hidden = true;
+    pingRunning = true;
+    busy($('#pingBtn'), true);
+    try {
+      var resp = await fetch('/api/ping?host=' + encodeURIComponent(host) + '&port=' + port + '&count=' + count);
+      await assertOk(resp);
+      await ndjson(resp, function (line) {
+        if (line.type === 'start') {
+          con.appendChild(consoleLine([
+            { t: 'TCP Ping ' + line.host },
+            { t: ' [' + line.ip + '] ', cls: 'dim' },
+            { t: '端口 ' + line.port + '，共 ' + line.count + ' 次：' }
+          ]));
+        } else if (line.type === 'ping') {
+          if (line.ok) {
+            con.appendChild(consoleLine([
+              { t: '第 ' + line.seq + ' 次：', cls: 'dim' },
+              { t: '✓ ', cls: 'ok' },
+              { t: fmtMs(line.ms), cls: 'ok' }
+            ]));
+          } else {
+            con.appendChild(consoleLine([
+              { t: '第 ' + line.seq + ' 次：', cls: 'dim' },
+              { t: '✗ ', cls: 'fail' },
+              { t: line.error || '失败', cls: 'fail' }
+            ]));
+          }
+          con.scrollTop = con.scrollHeight;
+        } else if (line.type === 'error') {
+          throw new Error(line.error);
+        } else if (line.type === 'summary') {
+          var sum = $('#pingSummary');
+          sum.innerHTML = '';
+          sum.appendChild(chip('已发送', line.sent + ' 次'));
+          sum.appendChild(chip('成功', line.received + ' 次'));
+          sum.appendChild(chip('丢包率', line.loss + '%', line.loss > 0 ? '#dc2626' : '#16a34a'));
+          sum.appendChild(chip('最小', fmtMs(line.min)));
+          sum.appendChild(chip('平均', fmtMs(line.avg), msColor(line.avg)));
+          sum.appendChild(chip('最大', fmtMs(line.max)));
+          sum.hidden = false;
+        }
+      });
+    } catch (e) {
+      showError(panel, 'Ping 失败：' + e.message);
+    } finally {
+      pingRunning = false;
+      busy($('#pingBtn'), false);
+    }
+  }
+  $('#pingBtn').addEventListener('click', runPing);
+  $('#pingHost').addEventListener('keydown', function (e) { if (e.key === 'Enter') runPing(); });
+
+  /* ---------------- DNS ---------------- */
+  var dnsRunning = false;
+  async function runDns() {
+    if (dnsRunning) return;
+    var panel = $('#panel-dns');
+    clearPanel(panel);
+    var host = $('#dnsHost').value.trim();
+    var type = $('#dnsType').value;
+    if (!host) { showError(panel, '请输入域名'); return; }
+    var box = $('#dnsResults');
+    box.innerHTML = '';
+    dnsRunning = true;
+    busy($('#dnsBtn'), true, '查询中…');
+    try {
+      var resp = await fetch('/api/dns?host=' + encodeURIComponent(host) + '&type=' + type);
+      await assertOk(resp);
+      var data = await resp.json();
+      var entries = Object.keys(data.records || {});
+      if (!entries.length) { box.appendChild(el('div', 'empty', '未查询到任何记录')); return; }
+      entries.forEach(function (t) {
+        var v = data.records[t];
+        var card = el('div', 'result-card');
+        var head = el('div', 'result-head');
+        head.appendChild(el('div', 'result-title', t + ' 记录'));
+        if (v.ok && v.records.length) {
+          head.appendChild(el('span', 'badge badge-ok', v.records.length + ' 条'));
+        } else if (v.ok) {
+          head.appendChild(el('span', 'badge badge-off', '无记录'));
+        } else {
+          head.appendChild(el('span', 'badge badge-fail', v.error || '查询失败'));
+        }
+        card.appendChild(head);
+        if (v.ok && v.records.length) {
+          var list = el('div', 'record-list');
+          v.records.forEach(function (r) { list.appendChild(el('div', 'record-item mono', r)); });
+          card.appendChild(list);
+        }
+        box.appendChild(card);
+      });
+    } catch (e) {
+      showError(panel, '查询失败：' + e.message);
+    } finally {
+      dnsRunning = false;
+      busy($('#dnsBtn'), false);
+    }
+  }
+  $('#dnsBtn').addEventListener('click', runDns);
+  $('#dnsHost').addEventListener('keydown', function (e) { if (e.key === 'Enter') runDns(); });
+
+  /* ---------------- 端口检测 ---------------- */
+  var portRunning = false;
+  var portSvc = { 21: 'FTP', 22: 'SSH', 25: 'SMTP', 53: 'DNS', 80: 'HTTP', 110: 'POP3', 143: 'IMAP', 443: 'HTTPS', 465: 'SMTPS', 587: 'SMTP提交', 993: 'IMAPS', 995: 'POP3S', 1433: 'MSSQL', 3306: 'MySQL', 3389: '远程桌面', 5432: 'PostgreSQL', 6379: 'Redis', 8080: 'HTTP备用', 8443: 'HTTPS备用', 27017: 'MongoDB' };
+  async function runPort() {
+    if (portRunning) return;
+    var panel = $('#panel-port');
+    clearPanel(panel);
+    var host = $('#portHost').value.trim();
+    var mode = document.querySelector('input[name="portMode"]:checked').value;
+    var custom = mode === 'custom' ? $('#portList').value.trim() : '';
+    if (!host) { showError(panel, '请输入域名或 IP'); return; }
+    if (mode === 'custom' && !custom) { showError(panel, '请输入自定义端口'); return; }
+    var box = $('#portResults');
+    box.innerHTML = '';
+    $('#portSummary').hidden = true;
+    portRunning = true;
+    busy($('#portBtn'), true, '扫描中…');
+    try {
+      var q = '/api/port?host=' + encodeURIComponent(host) + (custom ? '&ports=' + encodeURIComponent(custom) : '');
+      var resp = await fetch(q);
+      await assertOk(resp);
+      var tbody = null;
+      await ndjson(resp, function (line) {
+        if (line.type === 'error') throw new Error(line.error);
+        if (line.type === 'start') {
+          var table = el('table', 'port-table');
+          var thead = el('thead');
+          var trh = el('tr');
+          ['端口', '服务', '状态', '耗时'].forEach(function (h) { trh.appendChild(el('th', null, h)); });
+          thead.appendChild(trh);
+          tbody = el('tbody');
+          table.appendChild(thead);
+          table.appendChild(tbody);
+          box.appendChild(table);
+        } else if (line.type === 'port') {
+          var tr = el('tr');
+          tr.appendChild(el('td', 'mono', String(line.port)));
+          tr.appendChild(el('td', null, line.service || portSvc[line.port] || '未知'));
+          var td = el('td');
+          var badge;
+          if (line.open) badge = el('span', 'badge badge-ok', '开放');
+          else if (line.errCode === 'ECONNREFUSED') badge = el('span', 'badge badge-off', '关闭');
+          else badge = el('span', 'badge badge-warn', '无响应/被过滤');
+          td.appendChild(badge);
+          tr.appendChild(td);
+          tr.appendChild(el('td', 'mono', line.ms != null ? fmtMs(line.ms) : (line.errCode || '—')));
+          tbody.appendChild(tr);
+        } else if (line.type === 'summary') {
+          var sum = $('#portSummary');
+          sum.innerHTML = '';
+          sum.appendChild(chip('开放端口', line.open + ' / ' + line.total, line.open ? '#16a34a' : null));
+          sum.appendChild(chip('总耗时', fmtMs(line.elapsedMs)));
+          sum.hidden = false;
+        }
+      });
+    } catch (e) {
+      showError(panel, '端口检测失败：' + e.message);
+    } finally {
+      portRunning = false;
+      busy($('#portBtn'), false);
+    }
+  }
+  $('#portBtn').addEventListener('click', runPort);
+  $('#portHost').addEventListener('keydown', function (e) { if (e.key === 'Enter') runPort(); });
+  document.querySelectorAll('input[name="portMode"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      $('#portList').style.display = document.querySelector('input[name="portMode"]:checked').value === 'custom' ? 'flex' : 'none';
+    });
+  });
+
+  /* ---------------- HTTP 检测 ---------------- */
+  var headersRunning = false;
+  function statusBadge(st) {
+    var cls = st >= 400 ? 'badge badge-fail' : (st >= 300 ? 'badge badge-warn' : 'badge badge-ok');
+    return el('span', cls, 'HTTP ' + st);
+  }
+  async function runHeaders() {
+    if (headersRunning) return;
+    var panel = $('#panel-headers');
+    clearPanel(panel);
+    var url = $('#headersUrl').value.trim();
+    if (!/^https?:\/\//i.test(url)) { showError(panel, '请输入以 http:// 或 https:// 开头的完整网址'); return; }
+    var box = $('#headersResults');
+    box.innerHTML = '';
+    headersRunning = true;
+    busy($('#headersBtn'), true, '检测中…');
+    try {
+      var resp = await fetch('/api/headers?url=' + encodeURIComponent(url));
+      await assertOk(resp);
+      var d = await resp.json();
+      var card = el('div', 'result-card');
+      var head = el('div', 'result-head');
+      head.appendChild(el('div', 'result-title', '响应概况'));
+      var right = el('div', 'result-right');
+      right.appendChild(statusBadge(d.status));
+      if (d.statusMessage) right.appendChild(el('span', 'muted', d.statusMessage));
+      head.appendChild(right);
+      card.appendChild(head);
+
+      var dl = el('dl', 'kv');
+      function kvRow(k, v) {
+        dl.appendChild(el('dt', null, k));
+        dl.appendChild(el('dd', 'mono', v));
+      }
+      kvRow('最终 URL', d.url);
+      kvRow('HTTP 版本', d.httpVersion ? 'HTTP/' + d.httpVersion : '—');
+      kvRow('服务器 IP', d.ip ? d.ip + ' (IPv' + d.family + ')' : '—');
+      kvRow('TLS', d.tls ? ((d.tls.protocol || '') + ' · ' + (d.tls.cipher || '')) : '未使用');
+      kvRow('传输大小', fmtSize(d.size) + (d.truncated ? '（截断）' : ''));
+      kvRow('总耗时', fmtMs(d.timings ? d.timings.total : null));
+      card.appendChild(dl);
+
+      if (d.redirects && d.redirects.length) {
+        var chain = el('div', 'redirect-chain');
+        d.redirects.forEach(function (r) {
+          chain.appendChild(el('span', 'step', r.status + ' → ' + (r.location || '')));
+          chain.appendChild(el('span', 'arrow', '➜'));
+        });
+        chain.appendChild(el('span', 'step', String(d.status)));
+        card.appendChild(chain);
+      }
+
+      var COMMON_KEYS = ['server', 'content-type', 'content-length', 'cache-control', 'content-encoding', 'date', 'location', 'x-powered-by', 'cf-ray', 'via'];
+      var list = el('div', 'record-list');
+      COMMON_KEYS.forEach(function (k) {
+        if (d.headers && d.headers[k] != null) {
+          var v = d.headers[k];
+          list.appendChild(el('div', 'record-item', k + ': ' + (Array.isArray(v) ? v.join('; ') : v)));
+        }
+      });
+      card.appendChild(list);
+
+      var det = el('details');
+      det.appendChild(el('summary', null, '查看全部响应头'));
+      var all = el('div', 'record-list');
+      Object.keys(d.headers || {}).forEach(function (k) {
+        var v = d.headers[k];
+        all.appendChild(el('div', 'record-item mono', k + ': ' + (Array.isArray(v) ? v.join('; ') : v)));
+      });
+      det.appendChild(all);
+      card.appendChild(det);
+      box.appendChild(card);
+    } catch (e) {
+      showError(panel, '检测失败：' + e.message);
+    } finally {
+      headersRunning = false;
+      busy($('#headersBtn'), false);
+    }
+  }
+  $('#headersBtn').addEventListener('click', runHeaders);
+  $('#headersUrl').addEventListener('keydown', function (e) { if (e.key === 'Enter') runHeaders(); });
+})();
+</script>
+</body>
+</html>
