@@ -14,6 +14,7 @@
 - **HTTP 检测**：状态码、响应头、重定向链、TLS 信息
 - **分流测试**：多端点出口 IP 对比，判断代理 / 分流
 - **WebRTC 泄露检测**：浏览器本地收集候选 IP 并分类
+- **IP 质量检测**：基于 IPinfo + ip-api.com，识别 IP 类型（机房 / 住宅 / 移动 / 代理）、风控值、原生/广播、共享人数、场景评分
 
 ## 项目结构
 
@@ -42,6 +43,7 @@
   （避免 Vercel 把根目录误判为 Node.js Server 入口）
 - 已连接 GitHub，`main` 分支 push 即自动部署
 - 函数最长执行 60s（`vercel.json` 的 `maxDuration`）
+- 环境变量 `IPINFO_TOKEN`（IPinfo 访问令牌，用于 IP 质量检测）
 
 ## 本地运行
 
