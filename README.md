@@ -9,6 +9,7 @@
 - **IP 检测**：出口 IPv4/IPv6、归属地（国家 / 地区 / 城市 / 经纬度 / 时区）、Vercel 边缘节点
 - **网站测速**：HTTP 测速，DNS / TCP / TLS / TTFB / 下载 分阶段耗时
 - **Ping 测试**：TCP 握手模拟 Ping，丢包率与延迟统计；进入 Ping 标签页自动测试访客自己的出口 IP
+- **评测**：基于 Globalping 社区探针网络的分布式拨测，分「全国测试」（中国区探针）与「全球测试」（全球探针），支持 ICMP Ping（4 包，延迟 / 丢包率）与网站测速（HTTP 分阶段耗时 / 状态码），结果逐探针实时刷新
 - **DNS 查询**：A / AAAA / CNAME / MX / NS / TXT / SOA / CAA
 - **端口检测**：常用端口与自定义端口扫描
 - **HTTP 检测**：状态码、响应头、重定向链、TLS 信息
@@ -29,6 +30,7 @@
 │   ├── ip.js
 │   ├── http.js
 │   ├── ping.js
+│   ├── globalping.js
 │   ├── dns.js
 │   ├── port.js
 │   ├── headers.js
@@ -44,6 +46,7 @@
 - 已连接 GitHub，`main` 分支 push 即自动部署
 - 函数最长执行 60s（`vercel.json` 的 `maxDuration`）
 - 环境变量 `IPINFO_TOKEN`（IPinfo 访问令牌，用于 IP 质量检测）
+- 环境变量 `GLOBALPING_TOKEN`（Globalping API 令牌，用于评测标签页；未设置时使用代码内内置 token）
 
 ## 本地运行
 

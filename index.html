@@ -75,6 +75,13 @@ html[data-theme="light"] .btn.primary{color:#fff;}
 .quick{display:flex;gap:6px;flex-wrap:wrap;margin:0 2px 5px;}
 .quick span{font-size:12px;color:var(--blue);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;}
 .quick span:hover{border-color:var(--blue);}
+/* ---- 评测（Globalping 探针） ---- */
+.subtabs{display:flex;gap:5px;background:var(--tabs);padding:4px;border-radius:9px;margin:0 2px 8px;width:fit-content;max-width:100%;}
+.subtab{border:0;background:transparent;color:var(--muted);font-size:13px;padding:6px 18px;border-radius:7px;cursor:pointer;font-weight:500;font-family:inherit;white-space:nowrap;}
+.subtab.active{background:var(--tab-active);color:var(--tab-active-text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.table-scroll{overflow-x:auto;}
+.net-cell{display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;}
+pre.record-item{white-space:pre-wrap;margin:0;font-size:12px;line-height:1.6;}
 /* ---- IP/域名查询框 ---- */
 .ip-search{display:flex;gap:8px;margin:2px 0 10px;align-items:stretch;}
 .ip-search-box{flex:1;display:flex;align-items:center;gap:8px;background:var(--input-bg);border:1px solid var(--line);border-radius:9px;padding:0 13px;min-width:0;}
@@ -197,8 +204,9 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
 <main class="wrap">
   <nav class="tabs">
     <button class="tab active" data-tab="ip">IP 检测</button>
-    <button class="tab" data-tab="http">网站测速</button>
     <button class="tab" data-tab="ping">Ping 测试</button>
+    <button class="tab" data-tab="http">网站测速</button>
+    <button class="tab" data-tab="probe">评测</button>
     <button class="tab" data-tab="dns">DNS 查询</button>
     <button class="tab" data-tab="port">端口检测</button>
     <button class="tab" data-tab="headers">HTTP 检测</button>
@@ -252,6 +260,36 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     <div class="error" id="pingError" hidden></div>
     <div class="summary" id="pingSummary" hidden></div>
     <div class="console" id="pingConsole" hidden></div>
+  </section>
+
+  <!-- 评测（Globalping 探针：全国 / 全球） -->
+  <section class="panel" id="panel-probe">
+    <div class="quick">
+      <span onclick="setTarget('probeTarget','www.baidu.com')">baidu.com</span>
+      <span onclick="setTarget('probeTarget','www.qq.com')">qq.com</span>
+      <span onclick="setTarget('probeTarget','github.com')">github.com</span>
+    </div>
+    <div class="subtabs">
+      <button class="subtab active" data-scope="cn" type="button">全国测试</button>
+      <button class="subtab" data-scope="global" type="button">全球测试</button>
+    </div>
+    <div class="controls">
+      <input type="text" id="probeTarget" class="grow" placeholder="域名、IP 或网址，如 www.example.com" spellcheck="false">
+      <select id="probeType">
+        <option value="ping" selected>Ping</option>
+        <option value="http">网站测速 (HTTP)</option>
+      </select>
+      <select id="probeLimit">
+        <option value="5">5 个探针</option>
+        <option value="10" selected>10 个探针</option>
+        <option value="20">20 个探针</option>
+      </select>
+      <button class="btn primary" id="probeBtn">开始评测</button>
+    </div>
+    <div class="hint">全国测试使用中国区社区探针、全球测试使用全球探针（Globalping 网络）；Ping 发 4 个 ICMP 包，网站测速走 HTTPS GET /。结果逐探针实时刷新。</div>
+    <div class="error" id="probeError" hidden></div>
+    <div class="summary" id="probeSummary" hidden></div>
+    <div id="probeResults"></div>
   </section>
 
   <!-- DNS -->
@@ -353,7 +391,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
 
 <footer>
   LiteDog · 轻量级网站检测工具，使用单个服务器节点与浏览器节点，结果仅供参考。<br>
-  运行于 Vercel 边缘网络 ·
+  评测功能基于 <a href="https://globalping.io" target="_blank" rel="noopener">Globalping</a> 社区探针网络 · 运行于 Vercel 边缘网络 ·
   <a id="ghLink" href="https://github.com/liaokaixuan2/litedog" target="_blank" rel="noopener">GitHub 源码</a>
 </footer>
 
@@ -714,6 +752,209 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   }
   $('#pingBtn').addEventListener('click', runPing);
   $('#pingHost').addEventListener('keydown', function (e) { if (e.key === 'Enter') runPing(); });
+
+  /* ---------------- 评测（Globalping 探针：全国 / 全球） ---------------- */
+  var probeRunning = false;
+  var probeScope = 'cn';
+  document.querySelectorAll('#panel-probe .subtab').forEach(function (s) {
+    s.addEventListener('click', function () {
+      document.querySelectorAll('#panel-probe .subtab').forEach(function (x) { x.classList.toggle('active', x === s); });
+      probeScope = s.getAttribute('data-scope');
+    });
+  });
+  var probeCityZh = { 'Beijing':'北京','Shanghai':'上海','Guangzhou':'广州','Shenzhen':'深圳','Hangzhou':'杭州','Nanjing':'南京','Suzhou':'苏州','Chengdu':'成都','Chongqing':'重庆','Wuhan':'武汉',"Xi'an":'西安','Xian':'西安','Qingdao':'青岛','Jinan':'济南','Xiamen':'厦门','Fuzhou':'福州','Changsha':'长沙','Zhengzhou':'郑州','Shenyang':'沈阳','Dalian':'大连','Harbin':'哈尔滨','Tianjin':'天津','Hefei':'合肥','Kunming':'昆明','Lishui':'丽水','Wuxi':'无锡','Ningbo':'宁波','Dongguan':'东莞','Foshan':'佛山' };
+  var probeCountryZh = { CN:'中国', HK:'中国香港', MO:'中国澳门', TW:'中国台湾', JP:'日本', SG:'新加坡', US:'美国', DE:'德国', FR:'法国', GB:'英国', KR:'韩国', IN:'印度', AU:'澳大利亚', CA:'加拿大', RU:'俄罗斯', NL:'荷兰', BR:'巴西', MY:'马来西亚', TH:'泰国', ID:'印尼', VN:'越南', PH:'菲律宾', AE:'阿联酋', TR:'土耳其', IT:'意大利', ES:'西班牙', PL:'波兰', SE:'瑞典', FI:'芬兰', NO:'挪威', AT:'奥地利', CH:'瑞士', IE:'爱尔兰', CZ:'捷克', RO:'罗马尼亚', UA:'乌克兰', MX:'墨西哥', AR:'阿根廷', ZA:'南非', IL:'以色列', KZ:'哈萨克斯坦', PK:'巴基斯坦', MN:'蒙古' };
+  function probeCityName(city) { return probeCityZh[city] || city || '—'; }
+  function probeCountryName(code) { return probeCountryZh[code] || code || ''; }
+
+  function normalizeProbeTarget(type, raw) {
+    var t = raw.trim();
+    if (!t) return null;
+    if (type === 'http') {
+      if (!/^https?:\/\//i.test(t)) t = 'https://' + t;
+      try {
+        var u = new URL(t);
+        if (!u.hostname) return null;
+        return { target: u.hostname, path: (u.pathname || '/') + (u.search || ''), protocol: u.protocol === 'http:' ? 'http' : 'https', port: u.port ? Number(u.port) : (u.protocol === 'http:' ? 80 : 443) };
+      } catch (e) { return null; }
+    }
+    return { target: t.replace(/^[a-z]+:\/\//i, '').split(/[\/:]/)[0], path: '/', protocol: 'https', port: 443 };
+  }
+
+  function probeStatusBadge(r) {
+    var res = r.result || {};
+    if (res.status === 'failed') return el('span', 'badge badge-fail', '失败');
+    if (res.status !== 'finished') return el('span', 'badge badge-off', '进行中');
+    if (res.stats && res.stats.rcv === 0) return el('span', 'badge badge-fail', '全部超时');
+    if (res.statusCode != null) return badgeForStatus(res.statusCode);
+    return el('span', 'badge badge-ok', '完成');
+  }
+
+  function renderProbeTable(box, type, data) {
+    var results = data.results || [];
+    var done = 0;
+    var wrap = el('div', 'table-scroll');
+    var table = el('table', 'port-table');
+    var thead = el('thead');
+    var trh = el('tr');
+    (['节点', '网络', '解析 IP', type === 'http' ? '总耗时' : '平均延迟', type === 'http' ? '状态码' : '丢包率', '状态']).forEach(function (h) { trh.appendChild(el('th', null, h)); });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    var tbody = el('tbody');
+    results.forEach(function (r) {
+      var p = r.probe || {};
+      var res = r.result || {};
+      var tr = el('tr');
+      tr.appendChild(el('td', null, probeCityName(p.city) + (probeCountryName(p.country) ? ' · ' + probeCountryName(p.country) : '')));
+      var netTd = el('td');
+      var netSpan = el('span', 'net-cell', p.network || '—');
+      if (p.network) netSpan.title = p.network + (p.asn ? '（AS' + p.asn + '）' : '');
+      netTd.appendChild(netSpan);
+      tr.appendChild(netTd);
+      tr.appendChild(el('td', 'mono', res.resolvedAddress || '—'));
+      if (type === 'http') {
+        var tm = res.timings || {};
+        var totalTd = el('td');
+        if (tm.total != null) {
+          var tb = el('span', null, fmtMs(tm.total));
+          tb.style.color = msColor(tm.total);
+          totalTd.appendChild(tb);
+          totalTd.title = 'DNS ' + (tm.dns != null ? tm.dns : '—') + ' / TCP ' + (tm.tcp != null ? tm.tcp : '—') + ' / TLS ' + (tm.tls != null ? tm.tls : '—') + ' / 首字节 ' + (tm.firstByte != null ? tm.firstByte : '—') + ' ms';
+        } else {
+          totalTd.textContent = '—';
+        }
+        tr.appendChild(totalTd);
+        var codeTd = el('td');
+        if (res.statusCode != null) codeTd.appendChild(badgeForStatus(res.statusCode));
+        else codeTd.textContent = '—';
+        tr.appendChild(codeTd);
+      } else {
+        var stats = res.stats;
+        var avgTd = el('td');
+        if (stats && stats.avg != null) {
+          var ab = el('span', null, fmtMs(stats.avg));
+          ab.style.color = msColor(stats.avg);
+          avgTd.appendChild(ab);
+          avgTd.title = '最小 ' + fmtMs(stats.min) + ' / 最大 ' + fmtMs(stats.max);
+        } else {
+          avgTd.textContent = '—';
+        }
+        tr.appendChild(avgTd);
+        tr.appendChild(el('td', null, stats ? stats.loss + '%' : '—'));
+      }
+      var stTd = el('td');
+      stTd.appendChild(probeStatusBadge(r));
+      tr.appendChild(stTd);
+      tbody.appendChild(tr);
+      if (res.status && res.status !== 'in-progress') done++;
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    box.appendChild(wrap);
+    var hasRaw = false;
+    var detailsBox = el('div');
+    results.forEach(function (r) {
+      var res = r.result || {};
+      if (!res.rawOutput) return;
+      hasRaw = true;
+      var p = r.probe || {};
+      var d = el('details');
+      d.appendChild(el('summary', null, probeCityName(p.city) + ' · ' + (p.network || '') + ' · 原始输出'));
+      d.appendChild(el('pre', 'record-item mono', res.rawOutput));
+      detailsBox.appendChild(d);
+    });
+    if (hasRaw) box.appendChild(detailsBox);
+    return done;
+  }
+
+  function renderProbeSummary(type, data) {
+    var results = data.results || [];
+    var fin = results.filter(function (r) { return r.result && r.result.status === 'finished'; });
+    var sum = $('#probeSummary');
+    sum.innerHTML = '';
+    sum.appendChild(chip('探针', fin.length + '/' + results.length + ' 个完成'));
+    var okList, val, minV, maxV;
+    if (type === 'http') {
+      okList = fin.filter(function (r) { return r.result.timings && r.result.timings.total != null; });
+      val = function (r) { return r.result.timings.total; };
+    } else {
+      okList = fin.filter(function (r) { return r.result.stats && r.result.stats.avg != null; });
+      val = function (r) { return r.result.stats.avg; };
+      minV = function (r) { return r.result.stats.min; };
+      maxV = function (r) { return r.result.stats.max; };
+    }
+    if (okList.length) {
+      var vals = okList.map(val);
+      var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+      var min = type === 'http' ? Math.min.apply(null, vals) : Math.min.apply(null, okList.map(minV));
+      var max = type === 'http' ? Math.max.apply(null, vals) : Math.max.apply(null, okList.map(maxV));
+      sum.appendChild(chip('平均', fmtMs(avg), msColor(avg)));
+      sum.appendChild(chip('最快', fmtMs(min), msColor(min)));
+      sum.appendChild(chip('最慢', fmtMs(max), msColor(max)));
+    }
+    sum.hidden = false;
+  }
+
+  async function runProbe() {
+    if (probeRunning) return;
+    var panel = $('#panel-probe');
+    clearPanel(panel);
+    var type = $('#probeType').value;
+    var limit = parseInt($('#probeLimit').value, 10) || 10;
+    var norm = normalizeProbeTarget(type, $('#probeTarget').value);
+    if (!norm || !norm.target) { showError(panel, '请输入有效的目标'); return; }
+    var payload = {
+      type: type,
+      target: norm.target,
+      scope: probeScope,
+      limit: limit,
+      measurementOptions: type === 'http'
+        ? { protocol: norm.protocol, port: norm.port, request: { method: 'GET', path: norm.path || '/' } }
+        : { packets: 4 }
+    };
+    var box = $('#probeResults');
+    box.innerHTML = '';
+    $('#probeSummary').hidden = true;
+    probeRunning = true;
+    busy($('#probeBtn'), true, '评测中…');
+    try {
+      var resp = await fetch('/api/globalping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      await assertOk(resp);
+      var created = await resp.json();
+      if (!created || !created.id) throw new Error('未创建测量任务');
+      box.appendChild(el('div', 'hint', '任务已下发到 ' + (created.probesCount || '?') + ' 个' + (probeScope === 'cn' ? '中国区' : '全球') + '探针，正在收集结果…'));
+      var data = null;
+      var deadline = Date.now() + 90000;
+      while (Date.now() < deadline) {
+        await new Promise(function (r) { setTimeout(r, 1500); });
+        var gr = await fetch('https://api.globalping.io/v1/measurements/' + encodeURIComponent(created.id), { cache: 'no-store' });
+        if (!gr.ok) {
+          if (gr.status === 404) throw new Error('测量任务不存在或已过期');
+          throw new Error('获取结果失败 (HTTP ' + gr.status + ')');
+        }
+        data = await gr.json();
+        box.innerHTML = '';
+        var done = renderProbeTable(box, type, data);
+        var total = (data.results || []).length;
+        if (data.status !== 'in-progress' || (total > 0 && done === total)) break;
+      }
+      if (!data) throw new Error('获取结果超时，请稍后重试');
+      box.innerHTML = '';
+      renderProbeTable(box, type, data);
+      renderProbeSummary(type, data);
+    } catch (e) {
+      showError(panel, '评测失败：' + e.message);
+    } finally {
+      probeRunning = false;
+      busy($('#probeBtn'), false);
+    }
+  }
+  $('#probeBtn').addEventListener('click', runProbe);
+  $('#probeTarget').addEventListener('keydown', function (e) { if (e.key === 'Enter') runProbe(); });
 
   /* ---------------- DNS ---------------- */
   var dnsRunning = false;
