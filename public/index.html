@@ -219,6 +219,14 @@ footer a{color:var(--blue);text-decoration:none;}
     <div class="error" id="ipError" hidden></div>
     <div id="ipCards"></div>
 
+    <div class="result-card" id="ipQualityCard" hidden>
+      <div class="result-head">
+        <div class="result-title">IP 质量检测</div>
+      </div>
+      <div class="hint">检测 IP 类型、风控值、原生/广播、共享人数与应用场景评分。</div>
+      <div id="ipQualityBody"></div>
+    </div>
+
     <div class="result-card">
       <div class="result-head">
         <div class="result-title">分流测试</div>
@@ -811,6 +819,7 @@ footer a{color:var(--blue);text-decoration:none;}
       card.appendChild(dl);
       box.appendChild(card);
       ipLoaded = true;
+      loadIpCheck();
     } catch (e) {
       showError(ipPanel, 'IP 检测失败：' + e.message);
     }
@@ -924,6 +933,65 @@ footer a{color:var(--blue);text-decoration:none;}
   }
   $('#splitBtn').addEventListener('click', runSplit);
   $('#webrtcBtn').addEventListener('click', runWebrtc);
+
+  async function loadIpCheck() {
+    var card = $('#ipQualityCard');
+    var body = $('#ipQualityBody');
+    card.hidden = false;
+    body.innerHTML = '';
+    body.appendChild(el('div', 'hint', '正在聚合 IPinfo / ip-api 数据…'));
+    try {
+      var r = await fetch('/api/ipcheck', { cache: 'no-store' });
+      var d = await r.json();
+      body.innerHTML = '';
+      if (!r.ok) { body.appendChild(el('div', 'empty', d.error || '质量检测失败')); return; }
+      var sum = el('div', 'summary');
+      sum.style.marginBottom = '10px';
+      sum.appendChild(chip('IP 类型', d.type.label, '#e11d48'));
+      sum.appendChild(chip('风控值', d.risk.score + '% ' + d.risk.label, d.risk.score < 30 ? '#16a34a' : (d.risk.score < 60 ? '#d97706' : '#dc2626')));
+      sum.appendChild(chip('IP 属性', d.native.label, d.native.native ? '#16a34a' : '#d97706'));
+      sum.appendChild(chip('共享人数', d.sharing.text + '（' + d.sharing.level + '）', '#0ea5e9'));
+      body.appendChild(sum);
+
+      var dl = el('dl', 'kv');
+      function row(k, v) { dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', 'mono', v == null || v === '' ? '—' : v)); }
+      row('ASN', d.asn.number || '—');
+      row('ASN 名称', d.asn.name || '—');
+      row('ASN 域名', d.asn.domain || '—');
+      row('ISP', d.asn.isp || '—');
+      row('组织', d.asn.org || '—');
+      row('国家/地区', (d.geo.country || '—') + (d.geo.region ? ' / ' + d.geo.region : ''));
+      row('城市', d.geo.city || '—');
+      row('时区', d.geo.timezone || '—');
+      row('经纬度', d.geo.loc || '—');
+      row('检测标记', 'proxy=' + d.flags.proxy + ' · hosting=' + d.flags.hosting + ' · mobile=' + d.flags.mobile);
+      body.appendChild(dl);
+
+      var sc = el('div');
+      sc.style.display = 'grid';
+      sc.style.gridTemplateColumns = 'repeat(auto-fit, minmax(88px, 1fr))';
+      sc.style.gap = '8px';
+      (d.scenes || []).forEach(function (s) {
+        var item = el('div');
+        item.style.textAlign = 'center';
+        item.style.padding = '10px 6px';
+        item.style.border = '1px solid #e5e7eb';
+        item.style.borderRadius = '8px';
+        item.appendChild(el('div', null, s.name));
+        item.appendChild(el('div', null, '★'.repeat(s.stars) + '☆'.repeat(5 - s.stars)));
+        var lbl = el('div', null, s.stars >= 4 ? '推荐' : (s.stars >= 3 ? '一般' : '不推荐'));
+        lbl.style.color = s.stars >= 4 ? '#16a34a' : (s.stars >= 3 ? '#d97706' : '#dc2626');
+        item.appendChild(lbl);
+        sc.appendChild(item);
+      });
+      body.appendChild(sc);
+      body.appendChild(el('div', 'hint', '基于 IPinfo + ip-api.com 公开数据估算；「原生/广播」「共享人数」为启发式结果，仅供参考。'));
+    } catch (e) {
+      body.innerHTML = '';
+      body.appendChild(el('div', 'empty', 'IP 质量检测失败：' + e.message));
+    }
+  }
+
   loadIp();
 })();
 </script>
