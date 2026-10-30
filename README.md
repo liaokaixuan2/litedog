@@ -53,6 +53,17 @@ node lib/core.js            # 默认监听 3000 端口
 PORT=3333 node lib/core.js
 ```
 
+本地调试 IP 质量检测时，可设置 `LITEDOG_TEST_IP` 模拟公网客户端 IP（否则本机 127.0.0.1 会被判为私有 IP 拒绝检测）：
+
+```bash
+LITEDOG_TEST_IP=8.8.8.8 node lib/core.js
+```
+
+## 界面
+
+- 默认黑夜模式，右上角 ☀️/🌙 可切换白天/黑夜并记住选择（localStorage）
+- IP 质量检测卡片采用描边徽章 + 纯净度渐变条（参考 ping0.cc 风格）
+
 ## 说明
 
 - 零第三方依赖，全部基于 Node.js 内置模块
