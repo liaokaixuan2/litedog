@@ -14,7 +14,7 @@
 - **HTTP 检测**：状态码、响应头、重定向链、TLS 信息
 - **分流测试**：多端点出口 IP 对比，判断代理 / 分流
 - **WebRTC 泄露检测**：浏览器本地收集候选 IP 并分类
-- **IP 质量检测**：基于 IPinfo + ip-api.com + Scamalytics，识别 IP 类型（机房 / 住宅 / 移动 / 代理）、风控值、Scamalytics 欺诈值、CIDR 网段、原生/广播、共享人数、场景评分
+- **IP 质量检测**：默认检测访客出口 IP，也支持在顶部查询框输入任意 IP 或域名（`/api/ipcheck?host=`）。基于 IPinfo + ip-api.com + Scamalytics，识别 IP 类型（机房 / 住宅 / 移动 / 代理）、风控值、Scamalytics 欺诈值、CIDR 网段、原生/广播、共享人数、场景评分
 
 ## 项目结构
 

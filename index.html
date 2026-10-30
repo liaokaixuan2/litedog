@@ -75,6 +75,15 @@ html[data-theme="light"] .btn.primary{color:#fff;}
 .quick{display:flex;gap:12px;flex-wrap:wrap;margin:0 4px 8px;}
 .quick span{font-size:24px;color:var(--blue);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 20px;cursor:pointer;}
 .quick span:hover{border-color:var(--blue);}
+/* ---- IP/域名查询框 ---- */
+.ip-search{display:flex;gap:14px;margin:2px 0 20px;align-items:stretch;}
+.ip-search-box{flex:1;display:flex;align-items:center;gap:14px;background:var(--input-bg);border:1px solid var(--line);border-radius:14px;padding:0 24px;min-width:0;}
+.ip-search-box:focus-within{border-color:var(--blue);box-shadow:0 0 0 5px var(--blue-focus);}
+.ip-search-box svg{width:30px;height:30px;flex:none;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;}
+.ip-search-box input{flex:1;border:0;outline:none;background:transparent;color:var(--text);font-size:28px;font-family:inherit;padding:18px 0;min-width:0;}
+.ip-search-box input::placeholder{color:var(--muted);}
+.ip-search .btn{border-radius:14px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);color:#fff;white-space:nowrap;}
+.ip-search .btn:hover{filter:brightness(1.12);}
 .error{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35);color:#f87171;padding:16px 22px;border-radius:12px;margin:18px 0;font-size:26px;}
 .summary{display:flex;flex-wrap:wrap;gap:16px;margin:20px 0;}
 .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 26px;font-size:26px;color:var(--muted);box-shadow:var(--shadow);}
@@ -167,6 +176,8 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   .header-inner{height:76px;}
   .info-row{flex-direction:column;align-items:flex-start;gap:8px;}
   .info-value{text-align:left;margin-left:0;}
+  .ip-search{flex-direction:column;}
+  .ip-search .btn{padding:16px 24px;}
 }
 </style>
 </head>
@@ -299,6 +310,15 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   <section class="panel active" id="panel-ip">
     <div class="summary" id="ipSummary" hidden></div>
     <div class="error" id="ipError" hidden></div>
+
+    <div class="ip-search">
+      <div class="ip-search-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="ipQuery" placeholder="输入 IP 或域名进行查询，如 1.1.1.1 / google.com" spellcheck="false">
+      </div>
+      <button class="btn" id="ipQueryBtn">查询</button>
+    </div>
+
     <div id="ipCards"></div>
 
     <div class="result-card" id="ipQualityCard" hidden>
@@ -329,7 +349,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
 </main>
 
 <footer>
-  LiteDog · 轻量级网站检测工具，功能参考 itdog.cn，使用单个服务器节点与浏览器节点，结果仅供参考。<br>
+  LiteDog · 轻量级网站检测工具，使用单个服务器节点与浏览器节点，结果仅供参考。<br>
   运行于 Vercel 边缘网络 ·
   <a id="ghLink" href="https://github.com/liaokaixuan2/litedog" target="_blank" rel="noopener">GitHub 源码</a>
 </footer>
@@ -1081,17 +1101,27 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     return r;
   }
 
-  async function loadIpCheck() {
+  async function loadIpCheck(target) {
     var card = $('#ipQualityCard');
     var body = $('#ipQualityBody');
     card.hidden = false;
     body.innerHTML = '';
     body.appendChild(el('div', 'hint', '正在聚合 IPinfo / ip-api / Scamalytics 数据…'));
     try {
-      var r = await fetch('/api/ipcheck', { cache: 'no-store' });
+      var url = target ? ('/api/ipcheck?host=' + encodeURIComponent(target)) : '/api/ipcheck';
+      var r = await fetch(url, { cache: 'no-store' });
       var d = await r.json();
       body.innerHTML = '';
       if (!r.ok) { body.appendChild(el('div', 'empty', d.error || '质量检测失败')); return; }
+
+      /* 标题行：标明查询对象 */
+      var head = card.querySelector('.result-head');
+      var oldTarget = document.getElementById('ipQueryTargetBadge');
+      if (oldTarget) oldTarget.remove();
+      var targetBadge = el('span', 'badge ' + (target ? 'badge-warn' : 'badge-ok'),
+        target ? ('查询目标 ' + d.ip) : '我的出口 IP');
+      targetBadge.id = 'ipQueryTargetBadge';
+      head.appendChild(targetBadge);
 
       var tkey = d.type && d.type.key;
       var fraudScore = (d.fraud && typeof d.fraud.score === 'number') ? d.fraud.score : null;
@@ -1191,6 +1221,25 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       body.appendChild(el('div', 'empty', 'IP 质量检测失败：' + e.message));
     }
   }
+
+  /* IP/域名查询框 */
+  var ipQueryRunning = false;
+  async function runIpQuery() {
+    if (ipQueryRunning) return;
+    var q = $('#ipQuery').value.trim();
+    ipPanel.querySelector('.error').hidden = true;
+    if (!q) { showError(ipPanel, '请输入要查询的 IP 或域名'); return; }
+    ipQueryRunning = true;
+    busy($('#ipQueryBtn'), true, '查询中…');
+    try {
+      await loadIpCheck(q);
+    } finally {
+      ipQueryRunning = false;
+      busy($('#ipQueryBtn'), false);
+    }
+  }
+  $('#ipQueryBtn').addEventListener('click', runIpQuery);
+  $('#ipQuery').addEventListener('keydown', function (e) { if (e.key === 'Enter') runIpQuery(); });
 
   loadIp();
 })();
