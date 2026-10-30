@@ -12,7 +12,7 @@
 <style>
 :root{
   color-scheme:dark;
-  --radius:12px;
+  --radius:16px;
   --bg:#0a0e17; --card:#101724; --card2:#0c1320; --header:#0c1220;
   --tabs:#141c2f; --tab-active:#1f2a45; --tab-active-text:#7fa4ff;
   --text:#e6eaf2; --muted:#8b95a9; --line:#223047;
@@ -44,84 +44,84 @@ html[data-theme="light"]{
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);}
-.wrap{max-width:940px;margin:0 auto;padding:0 16px;}
+.wrap{max-width:1400px;margin:0 auto;padding:0 24px;}
 header{background:var(--header);border-bottom:1px solid var(--line);}
-.header-inner{display:flex;align-items:center;justify-content:space-between;height:58px;}
-.logo{font-size:20px;display:flex;align-items:baseline;gap:2px;}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:96px;}
+.logo{font-size:40px;display:flex;align-items:baseline;gap:4px;}
 .logo b{font-weight:700;}
-.logo .sub{font-size:13px;color:var(--muted);margin-left:6px;}
-.header-right{display:flex;align-items:center;gap:10px;}
-.node-badge{font-size:12px;color:var(--blue);background:var(--blue-soft);border:1px solid var(--blue-line);padding:4px 12px;border-radius:999px;white-space:nowrap;}
-.theme-btn{border:1px solid var(--line);background:transparent;color:var(--text);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.logo .sub{font-size:26px;color:var(--muted);margin-left:12px;}
+.header-right{display:flex;align-items:center;gap:16px;}
+.node-badge{font-size:24px;color:var(--blue);background:var(--blue-soft);border:1px solid var(--blue-line);padding:8px 22px;border-radius:999px;white-space:nowrap;}
+.theme-btn{border:1px solid var(--line);background:transparent;color:var(--text);width:56px;height:56px;border-radius:50%;cursor:pointer;font-size:26px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
 .theme-btn:hover{border-color:var(--blue);}
-main{padding:20px 0 30px;}
-.tabs{display:flex;gap:6px;background:var(--tabs);padding:6px;border-radius:12px;margin-bottom:16px;overflow-x:auto;}
-.tab{flex:1;border:0;background:transparent;padding:9px 14px;border-radius:9px;font-size:14px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500;font-family:inherit;}
-.tab.active{background:var(--tab-active);color:var(--tab-active-text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+main{padding:32px 0 48px;}
+.tabs{display:flex;gap:10px;background:var(--tabs);padding:10px;border-radius:18px;margin-bottom:26px;overflow-x:auto;}
+.tab{flex:1;border:0;background:transparent;padding:16px 22px;border-radius:14px;font-size:28px;color:var(--muted);cursor:pointer;white-space:nowrap;font-weight:500;font-family:inherit;}
+.tab.active{background:var(--tab-active);color:var(--tab-active-text);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.3);}
 .panel{display:none;}
 .panel.active{display:block;}
-.controls{display:flex;gap:10px;background:var(--card);padding:14px;border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap;}
-.controls input[type=text],.controls input[type=number]{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;outline:none;min-width:0;background:var(--input-bg);color:var(--text);font-family:inherit;}
+.controls{display:flex;gap:16px;background:var(--card);padding:24px;border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap;}
+.controls input[type=text],.controls input[type=number]{border:1px solid var(--line);border-radius:12px;padding:16px 22px;font-size:28px;outline:none;min-width:0;background:var(--input-bg);color:var(--text);font-family:inherit;}
 .controls input.grow{flex:1;}
-.controls input[type=text]:focus,.controls input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-focus);}
-.controls select{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--input-bg);color:var(--text);font-size:14px;font-family:inherit;}
-.btn{border:0;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer;font-weight:600;font-family:inherit;}
+.controls input[type=text]:focus,.controls input[type=number]:focus{border-color:var(--blue);box-shadow:0 0 0 5px var(--blue-focus);}
+.controls select{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--input-bg);color:var(--text);font-size:28px;font-family:inherit;}
+.btn{border:0;border-radius:12px;padding:16px 44px;font-size:28px;cursor:pointer;font-weight:600;font-family:inherit;}
 .btn.primary{background:var(--blue);color:#0a0e17;}
 html[data-theme="light"] .btn.primary{color:#fff;}
 .btn.primary:hover{background:var(--blue-dark);}
 .btn:disabled{opacity:.55;cursor:not-allowed;}
-.hint{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:10px 2px;font-size:13px;color:var(--muted);}
-.hint label{display:flex;align-items:center;gap:5px;color:var(--text);cursor:pointer;}
-.quick{display:flex;gap:8px;flex-wrap:wrap;margin:0 2px 4px;}
-.quick span{font-size:12px;color:var(--blue);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;}
+.hint{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;margin:16px 4px;font-size:26px;color:var(--muted);}
+.hint label{display:flex;align-items:center;gap:10px;color:var(--text);cursor:pointer;font-size:26px;}
+.quick{display:flex;gap:12px;flex-wrap:wrap;margin:0 4px 8px;}
+.quick span{font-size:24px;color:var(--blue);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 20px;cursor:pointer;}
 .quick span:hover{border-color:var(--blue);}
-.error{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35);color:#f87171;padding:10px 14px;border-radius:8px;margin:12px 0;font-size:13px;}
-.summary{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
-.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--muted);box-shadow:var(--shadow);}
-.chip b{color:var(--text);font-weight:600;margin-right:2px;}
-.result-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;margin:10px 0;box-shadow:var(--shadow);animation:fade .35s ease;}
-@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.result-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
-.result-title{font-size:14px;font-weight:600;}
-.result-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap;}
+.error{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35);color:#f87171;padding:16px 22px;border-radius:12px;margin:18px 0;font-size:26px;}
+.summary{display:flex;flex-wrap:wrap;gap:16px;margin:20px 0;}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 26px;font-size:26px;color:var(--muted);box-shadow:var(--shadow);}
+.chip b{color:var(--text);font-weight:600;margin-right:6px;}
+.result-card{background:var(--card);border-radius:var(--radius);padding:24px 28px;margin:16px 0;box-shadow:var(--shadow);animation:fade .35s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.result-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.result-title{font-size:28px;font-weight:600;}
+.result-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.badge{font-size:24px;font-weight:600;padding:6px 20px;border-radius:999px;white-space:nowrap;}
 .badge-ok{background:var(--ok-bg);color:var(--ok-text);}
 .badge-warn{background:var(--warn-bg);color:var(--warn-text);}
 .badge-fail{background:var(--fail-bg);color:var(--fail-text);}
 .badge-off{background:var(--off-bg);color:var(--off-text);}
-.total-ms{font-size:15px;font-weight:700;}
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-bottom:10px;}
-.metric{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
-.metric-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
-.metric-value{font-size:14px;font-weight:600;word-break:break-all;}
-.bar{height:6px;background:var(--tabs);border-radius:4px;overflow:hidden;}
-.bar i{display:block;height:100%;border-radius:4px;background:var(--blue);}
-.console{background:var(--console-bg);color:#cbd5e1;font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:13px;line-height:2;border-radius:var(--radius);padding:16px 18px;max-height:430px;overflow-y:auto;margin:12px 0;}
+.total-ms{font-size:30px;font-weight:700;}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px;}
+.metric{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 18px;}
+.metric-label{font-size:22px;color:var(--muted);margin-bottom:6px;}
+.metric-value{font-size:28px;font-weight:600;word-break:break-all;}
+.bar{height:10px;background:var(--tabs);border-radius:6px;overflow:hidden;}
+.bar i{display:block;height:100%;border-radius:6px;background:var(--blue);}
+.console{background:var(--console-bg);color:#cbd5e1;font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:26px;line-height:2;border-radius:var(--radius);padding:24px 28px;max-height:560px;overflow-y:auto;margin:18px 0;}
 .console .ok{color:#4ade80;}
 .console .fail{color:#f87171;}
 .console .dim{color:#64748b;}
-.record-list{display:flex;flex-direction:column;gap:6px;}
-.record-item{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:13px;word-break:break-all;}
+.record-list{display:flex;flex-direction:column;gap:10px;}
+.record-item{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-size:26px;word-break:break-all;}
 .mono{font-family:ui-monospace,Consolas,monospace;}
 .muted{color:var(--muted);}
 table.port-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
-table.port-table th,table.port-table td{padding:9px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--line);}
+table.port-table th,table.port-table td{padding:16px 24px;text-align:left;font-size:26px;border-bottom:1px solid var(--line);}
 table.port-table th{background:var(--card2);color:var(--muted);font-weight:500;}
 table.port-table tr:last-child td{border-bottom:0;}
-.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13px;margin:0;}
+.kv{display:grid;grid-template-columns:220px 1fr;gap:10px 20px;font-size:26px;margin:0;}
 .kv dt{color:var(--muted);}
 .kv dd{margin:0;word-break:break-all;}
-.redirect-chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;font-size:12px;}
-.redirect-chain .step{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:4px 10px;}
+.redirect-chain{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0;font-size:24px;}
+.redirect-chain .step{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 18px;}
 .arrow{color:var(--muted);}
-details{margin-top:10px;}
-summary{cursor:pointer;font-size:13px;color:var(--blue);}
-.empty{text-align:center;color:var(--muted);padding:30px 0;font-size:14px;}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 16px 44px;line-height:1.9;}
+details{margin-top:16px;}
+summary{cursor:pointer;font-size:26px;color:var(--blue);}
+.empty{text-align:center;color:var(--muted);padding:48px 0;font-size:28px;}
+footer{text-align:center;color:var(--muted);font-size:24px;padding:16px 24px 72px;line-height:1.9;}
 footer a{color:var(--blue);text-decoration:none;}
 /* ---- ping0 风格：描边徽章 + 纯净度渐变条 ---- */
-.tag-row{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 6px;}
-.tag{display:inline-flex;align-items:center;font-size:13px;font-weight:600;padding:5px 14px;border-radius:9px;border:1px solid;line-height:1.45;white-space:nowrap;background:transparent;}
+.tag-row{display:flex;flex-wrap:wrap;gap:16px;margin:6px 0 10px;}
+.tag{display:inline-flex;align-items:center;font-size:26px;font-weight:600;padding:10px 26px;border-radius:14px;border:1px solid;line-height:1.45;white-space:nowrap;background:transparent;}
 .tag-c-green{color:#34d399;border-color:rgba(52,211,153,.75);}
 .tag-c-orange{color:#ffb340;border-color:rgba(255,179,64,.75);}
 .tag-c-pink{color:#fb7185;border-color:rgba(251,113,133,.75);}
@@ -134,28 +134,39 @@ html[data-theme="light"] .tag-c-pink{color:#be123c;border-color:#fb7185;}
 html[data-theme="light"] .tag-c-red{color:#b91c1c;border-color:#f87171;}
 html[data-theme="light"] .tag-c-blue{color:#1d4ed8;border-color:#60a5fa;}
 html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
-.purity{margin:14px 0 4px;}
-.purity-pill{display:inline-block;color:#fff;font-size:13px;font-weight:700;padding:5px 14px;border-radius:8px;margin-bottom:10px;line-height:1.4;}
-.purity-bar{position:relative;height:16px;border-radius:999px;background:linear-gradient(90deg,#0dbf5e 0%,#22c55e 15%,#84cc16 32%,#eab308 50%,#f59e0b 65%,#f97316 78%,#ef4444 92%,#dc2626 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
-.purity-marker{position:absolute;top:2px;bottom:2px;width:5px;border-radius:3px;background:#fff;transform:translateX(-50%);box-shadow:0 1px 3px rgba(0,0,0,.45);}
-.purity-scale{position:relative;height:18px;margin-top:5px;font-size:11px;color:var(--muted);}
+.purity{margin:22px 0 8px;}
+.purity-pill{display:inline-block;color:#fff;font-size:26px;font-weight:700;padding:10px 26px;border-radius:12px;margin-bottom:16px;line-height:1.4;}
+.purity-bar{position:relative;height:26px;border-radius:999px;background:linear-gradient(90deg,#0dbf5e 0%,#22c55e 15%,#84cc16 32%,#eab308 50%,#f59e0b 65%,#f97316 78%,#ef4444 92%,#dc2626 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+.purity-marker{position:absolute;top:3px;bottom:3px;width:9px;border-radius:5px;background:#fff;transform:translateX(-50%);box-shadow:0 1px 4px rgba(0,0,0,.5);}
+.purity-scale{position:relative;height:30px;margin-top:10px;font-size:22px;color:var(--muted);}
 .purity-scale span{position:absolute;transform:translateX(-50%);}
 .purity-scale span.first{transform:none;}
-.sub-title{font-size:13px;font-weight:600;margin:14px 0 8px;}
-.scene-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;}
-.scene-item{border:1px solid var(--line);border-radius:10px;padding:12px 8px;text-align:center;background:var(--card2);}
-.scene-name{font-size:13px;margin-bottom:6px;}
-.scene-stars{font-size:15px;letter-spacing:2px;color:#fbbf24;}
-.scene-tag{font-size:12px;margin-top:5px;font-weight:600;}
+.purity-src{font-size:24px;color:var(--muted);margin-top:4px;}
+.sub-title{font-size:26px;font-weight:600;margin:24px 0 14px;}
+.scene-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;}
+.scene-item{border:1px solid var(--line);border-radius:14px;padding:22px 16px;text-align:center;background:var(--card2);}
+.scene-name{font-size:26px;margin-bottom:10px;}
+.scene-stars{font-size:30px;letter-spacing:4px;color:#fbbf24;}
+.scene-tag{font-size:24px;margin-top:8px;font-weight:600;}
 .scene-ok{color:var(--ok-text);}
 .scene-warn{color:var(--warn-text);}
 .scene-fail{color:var(--fail-text);}
-@media (max-width:600px){
+/* ---- 竖排信息行（ping0 详情表风格） ---- */
+.info-rows{display:flex;flex-direction:column;gap:12px;margin-top:20px;}
+.info-row{display:flex;justify-content:space-between;align-items:center;gap:18px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px 26px;flex-wrap:wrap;}
+.info-label{display:flex;align-items:center;gap:14px;font-size:26px;color:var(--muted);white-space:nowrap;}
+.info-label svg{width:30px;height:30px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.info-value{font-size:26px;font-weight:600;word-break:break-all;text-align:right;margin-left:auto;}
+@media (max-width:760px){
   .controls .btn{flex:1;}
-  .tab{padding:9px 10px;font-size:13px;}
-  .kv{grid-template-columns:96px 1fr;}
+  .tab{padding:14px 16px;font-size:26px;}
+  .kv{grid-template-columns:1fr;}
   .logo .sub{display:none;}
-  .node-badge{max-width:150px;overflow:hidden;text-overflow:ellipsis;}
+  .logo{font-size:32px;}
+  .node-badge{font-size:18px;max-width:280px;overflow:hidden;text-overflow:ellipsis;}
+  .header-inner{height:76px;}
+  .info-row{flex-direction:column;align-items:flex-start;gap:8px;}
+  .info-value{text-align:left;margin-left:0;}
 }
 </style>
 </head>
@@ -215,7 +226,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     </div>
     <div class="controls">
       <input type="text" id="pingHost" class="grow" placeholder="域名或 IP，如 www.example.com" spellcheck="false">
-      <input type="number" id="pingPort" value="443" min="1" max="65535" style="width:96px" title="TCP 端口">
+      <input type="number" id="pingPort" value="443" min="1" max="65535" style="width:150px" title="TCP 端口">
       <select id="pingCount">
         <option value="4" selected>4 次</option>
         <option value="8">8 次</option>
@@ -319,7 +330,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
 
 <footer>
   LiteDog · 轻量级网站检测工具，功能参考 itdog.cn，使用单个服务器节点与浏览器节点，结果仅供参考。<br>
-  运行于 Render 免费实例：闲置约 15 分钟后休眠，首次访问可能需等待约 1 分钟唤醒 ·
+  运行于 Vercel 边缘网络 ·
   <a id="ghLink" href="https://github.com/liaokaixuan2/litedog" target="_blank" rel="noopener">GitHub 源码</a>
 </footer>
 
@@ -874,33 +885,12 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       var resp = await fetch('/api/ip', { cache: 'no-store' });
       await assertOk(resp);
       var d = await resp.json();
-      var geo = d.geo || {};
       var sum = $('#ipSummary');
       sum.innerHTML = '';
       sum.appendChild(chip('出口 IP', d.ip || '—', '#6d9aff'));
       sum.appendChild(chip('协议', d.version || '未知'));
       if (d.edgeRegion) sum.appendChild(chip('边缘节点', d.edgeRegion));
       sum.hidden = false;
-
-      var card = el('div', 'result-card');
-      var head = el('div', 'result-head');
-      head.appendChild(el('div', 'result-title', '你的出口信息'));
-      var right = el('div', 'result-right');
-      right.appendChild(el('span', 'badge badge-ok', '检测完成'));
-      head.appendChild(right);
-      card.appendChild(head);
-      var dl = el('dl', 'kv');
-      function row(k, v) { dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', 'mono', v == null || v === '' ? '—' : v)); }
-      row('IP 版本', d.version || '未知');
-      row('IP 地址', d.ip);
-      row('国家/地区', (geo.country || '—') + (geo.region ? ' / ' + geo.region : ''));
-      row('城市', geo.city || '—');
-      row('时区', geo.timezone || '—');
-      row('经纬度', (geo.latitude && geo.longitude) ? (geo.latitude + ', ' + geo.longitude) : '—');
-      row('访问主机', d.host || '—');
-      row('User-Agent', d.userAgent || '—');
-      card.appendChild(dl);
-      box.appendChild(card);
       ipLoaded = true;
       loadIpCheck();
     } catch (e) {
@@ -1036,6 +1026,24 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     var s = String(label || '').replace('风险', '');
     return s || '未知';
   }
+  function riskZh(r) {
+    var s = String(r || '').toLowerCase();
+    if (!s) return '';
+    if (s.indexOf('low') >= 0) return '低风险';
+    if (s.indexOf('high') >= 0) return '高风险';
+    if (s.indexOf('moderate') >= 0 || s.indexOf('elevated') >= 0) return '中风险';
+    return String(r);
+  }
+  function fraudShort(score) {
+    if (score <= 30) return '低';
+    if (score <= 60) return '中';
+    return '高';
+  }
+  function fraudCls(score) {
+    if (score <= 30) return 'tag-c-green';
+    if (score <= 60) return 'tag-c-orange';
+    return 'tag-c-red';
+  }
   function purityInfo(score) {
     if (score <= 17) return { label: '极度纯净', color: '#0dbf5e' };
     if (score <= 37) return { label: '较为纯净', color: '#84cc16' };
@@ -1045,26 +1053,59 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     return { label: '极度污染', color: '#dc2626' };
   }
 
+  var ICONS = {
+    ip: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    geo: '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    loc: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+    asn: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+    owner: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    isp: '<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+    type: '<svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
+    fraud: '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    kind: '<svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+    score: '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    cidr: '<svg viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>',
+    tz: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    elapsed: '<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+  };
+  function infoRow(icon, label, valueNode) {
+    var r = el('div', 'info-row');
+    var l = el('div', 'info-label');
+    l.innerHTML = ICONS[icon];
+    l.appendChild(document.createTextNode(label));
+    r.appendChild(l);
+    var v = el('div', 'info-value');
+    if (valueNode && valueNode.nodeType) v.appendChild(valueNode);
+    else v.textContent = (valueNode == null || valueNode === '') ? '—' : String(valueNode);
+    r.appendChild(v);
+    return r;
+  }
+
   async function loadIpCheck() {
     var card = $('#ipQualityCard');
     var body = $('#ipQualityBody');
     card.hidden = false;
     body.innerHTML = '';
-    body.appendChild(el('div', 'hint', '正在聚合 IPinfo / ip-api 数据…'));
+    body.appendChild(el('div', 'hint', '正在聚合 IPinfo / ip-api / Scamalytics 数据…'));
     try {
       var r = await fetch('/api/ipcheck', { cache: 'no-store' });
       var d = await r.json();
       body.innerHTML = '';
       if (!r.ok) { body.appendChild(el('div', 'empty', d.error || '质量检测失败')); return; }
 
+      var tkey = d.type && d.type.key;
+      var fraudScore = (d.fraud && typeof d.fraud.score === 'number') ? d.fraud.score : null;
+      var rs = d.risk ? (typeof d.risk.score === 'number' ? d.risk.score : 0) : 0;
+
       /* 描边徽章行（ping0 风格） */
       var tags = el('div', 'tag-row');
-      var tkey = d.type && d.type.key;
       var typeCls = tkey === 'hosting' ? 'tag-c-orange' : (tkey === 'proxy' ? 'tag-c-red' : (tkey === 'mobile' ? 'tag-c-blue' : 'tag-c-green'));
       tags.appendChild(el('span', 'tag ' + typeCls, typeShort(tkey, d.type && d.type.label)));
-      var rs = d.risk ? (typeof d.risk.score === 'number' ? d.risk.score : 0) : 0;
       var riskCls = rs < 30 ? 'tag-c-green' : (rs < 60 ? 'tag-c-orange' : 'tag-c-red');
       tags.appendChild(el('span', 'tag ' + riskCls, rs + '% ' + riskShort(d.risk && d.risk.label)));
+      if (fraudScore != null) {
+        tags.appendChild(el('span', 'tag ' + fraudCls(fraudScore), '欺诈值 ' + fraudScore + ' ' + fraudShort(fraudScore)));
+      }
       tags.appendChild(el('span', 'tag tag-c-pink', '✓ ' + usageText(tkey)));
       if (d.native) {
         tags.appendChild(el('span', 'tag ' + (d.native.native ? 'tag-c-green' : 'tag-c-orange'),
@@ -1075,15 +1116,16 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       }
       body.appendChild(tags);
 
-      /* 纯净度渐变条（ping0 风格） */
+      /* 纯净度渐变条（优先使用 Scamalytics 欺诈值） */
+      var meterScore = fraudScore != null ? fraudScore : rs;
       var meter = el('div', 'purity');
-      var pi = purityInfo(rs);
-      var pill = el('span', 'purity-pill', rs + '% · ' + pi.label);
+      var pi = purityInfo(meterScore);
+      var pill = el('span', 'purity-pill', meterScore + '% · ' + pi.label);
       pill.style.background = pi.color;
       meter.appendChild(pill);
       var bar = el('div', 'purity-bar');
       var marker = el('div', 'purity-marker');
-      marker.style.left = Math.max(1, Math.min(98, rs)) + '%';
+      marker.style.left = Math.max(1, Math.min(98, meterScore)) + '%';
       bar.appendChild(marker);
       meter.appendChild(bar);
       var scale = el('div', 'purity-scale');
@@ -1094,25 +1136,41 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
         scale.appendChild(s);
       });
       meter.appendChild(scale);
+      meter.appendChild(el('div', 'purity-src', fraudScore != null ? '纯净度基于 Scamalytics 欺诈值计算' : '纯净度基于本站风控估算（Scamalytics 数据未获取到）'));
       body.appendChild(meter);
 
-      /* ASN / 归属信息（可折叠） */
-      var det = el('details');
-      det.appendChild(el('summary', null, 'ASN / 归属与检测标记'));
-      var dl = el('dl', 'kv');
-      function row(k, v) { dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', 'mono', v == null || v === '' ? '—' : v)); }
-      row('ASN', d.asn.number || '—');
-      row('ASN 名称', d.asn.name || '—');
-      row('ASN 域名', d.asn.domain || '—');
-      row('ISP', d.asn.isp || '—');
-      row('组织', d.asn.org || '—');
-      row('国家/地区', (d.geo.country || '—') + (d.geo.region ? ' / ' + d.geo.region : ''));
-      row('城市', d.geo.city || '—');
-      row('时区', d.geo.timezone || '—');
-      row('经纬度', d.geo.loc || '—');
-      row('检测标记', 'proxy=' + d.flags.proxy + ' · hosting=' + d.flags.hosting + ' · mobile=' + d.flags.mobile);
-      det.appendChild(dl);
-      body.appendChild(det);
+      /* 竖排信息行 */
+      var geo = d.geo || {};
+      var asnRaw = String((d.asn && d.asn.number) || '');
+      var asMatch = asnRaw.match(/AS\d+/i);
+      var asNo = asMatch ? asMatch[0].toUpperCase() : (asnRaw || '');
+      var asOwner = (d.asn && d.asn.name) || asnRaw.replace(/^AS\d+\s*/i, '') || (d.asn && d.asn.org) || '';
+      var rows = el('div', 'info-rows');
+      rows.appendChild(infoRow('ip', 'IP 地址', d.ip));
+      var geoText = [geo.country, geo.region, geo.city].filter(function (x) { return x; }).join(' / ');
+      rows.appendChild(infoRow('geo', '地理位置', geoText));
+      rows.appendChild(infoRow('loc', '经纬度', geo.loc));
+      rows.appendChild(infoRow('asn', 'ASN', asNo));
+      rows.appendChild(infoRow('owner', 'ASN 所有者', asOwner));
+      rows.appendChild(infoRow('isp', 'ISP / 组织', (d.asn && (d.asn.isp || d.asn.org)) || ''));
+      var typeNode = el('span', null, typeShort(tkey, d.type && d.type.label));
+      typeNode.style.color = tkey === 'hosting' ? '#ffb340' : (tkey === 'proxy' ? '#f87171' : (tkey === 'mobile' ? '#60a5fa' : '#34d399'));
+      rows.appendChild(infoRow('type', 'IP 类型', typeNode));
+      var fraudText;
+      if (fraudScore != null) {
+        fraudText = document.createTextNode(fraudScore + ' · ' + riskZh(d.fraud && d.fraud.risk) + '（Scamalytics）');
+      } else {
+        fraudText = el('span', 'muted', '未获取（Scamalytics 查询失败）');
+      }
+      rows.appendChild(infoRow('fraud', '欺诈值', fraudText));
+      rows.appendChild(infoRow('kind', '类型', d.native ? String(d.native.label || '').replace('（估算）', '') + '（估算）' : ''));
+      var scoreNode = el('span', null, meterScore + '% · ' + pi.label);
+      scoreNode.style.color = pi.color;
+      rows.appendChild(infoRow('score', '综合评分', scoreNode));
+      rows.appendChild(infoRow('cidr', 'CIDR', d.cidr));
+      rows.appendChild(infoRow('tz', '时区', geo.timezone));
+      rows.appendChild(infoRow('elapsed', '查询耗时', d.elapsedMs != null ? d.elapsedMs + ' ms' : ''));
+      body.appendChild(rows);
 
       /* 应用场景评分 */
       body.appendChild(el('div', 'sub-title', '应用场景评分'));
@@ -1127,7 +1185,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
         sc.appendChild(item);
       });
       body.appendChild(sc);
-      body.appendChild(el('div', 'hint', '基于 IPinfo + ip-api.com 公开数据估算；「原生/广播」「共享人数」为启发式结果，仅供参考。'));
+      body.appendChild(el('div', 'hint', '基于 IPinfo + ip-api.com + Scamalytics 公开数据估算；「类型」「共享人数」为启发式结果，仅供参考。'));
     } catch (e) {
       body.innerHTML = '';
       body.appendChild(el('div', 'empty', 'IP 质量检测失败：' + e.message));
