@@ -231,6 +231,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   <!-- Ping -->
   <section class="panel" id="panel-ping">
     <div class="quick">
+      <span id="pingOwnIpChip" hidden>我的 IP</span>
       <span onclick="setTarget('pingHost','www.baidu.com')">baidu.com</span>
       <span onclick="setTarget('pingHost','www.qq.com')">qq.com</span>
       <span onclick="setTarget('pingHost','1.1.1.1')">1.1.1.1</span>
@@ -480,13 +481,33 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   }
 
   // Tabs
+  var ownIp = '';
+  var pingAutoRan = false;
   document.querySelectorAll('.tab').forEach(function (t) {
     t.addEventListener('click', function () {
       document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x === t); });
       document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + t.getAttribute('data-tab')); });
       if (t.getAttribute('data-tab') === 'ip' && !ipLoaded) loadIp();
+      if (t.getAttribute('data-tab') === 'ping') maybeAutoPing();
     });
   });
+
+  // 进入 Ping 标签页时,自动测试访客自己的出口 IP
+  function maybeAutoPing() {
+    if (pingAutoRan) return;
+    var ip = ownIp;
+    if (!ip) {
+      fetch('/api/ip', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+        ownIp = d.ip || '';
+        if (!pingAutoRan) maybeAutoPing();
+      }).catch(function () { /* ignore */ });
+      return;
+    }
+    if (isPrivateIpJs(ip)) return; // 本地/私有 IP 不自动测试
+    pingAutoRan = true;
+    if (!$('#pingHost').value.trim()) $('#pingHost').value = ip;
+    runPing();
+  }
 
   // 节点徽标
   fetch('/api/nodeinfo').then(function (r) { return r.json(); }).then(function (d) {
@@ -911,6 +932,12 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       sum.appendChild(chip('协议', d.version || '未知'));
       if (d.edgeRegion) sum.appendChild(chip('边缘节点', d.edgeRegion));
       sum.hidden = false;
+      ownIp = d.ip || '';
+      var ownChip = document.getElementById('pingOwnIpChip');
+      if (ownIp && !isPrivateIpJs(ownIp)) {
+        ownChip.hidden = false;
+        ownChip.onclick = function () { setTarget('pingHost', ownIp); };
+      }
       ipLoaded = true;
       loadIpCheck();
     } catch (e) {
@@ -1073,6 +1100,36 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     return { label: '极度污染', color: '#dc2626' };
   }
 
+  /* ---- 中英双语展示（中文在前） ---- */
+  function bilingual(zh, en) {
+    zh = String(zh || '').trim();
+    en = String(en || '').trim();
+    if (zh && en && zh !== en) return zh + '（' + en + '）';
+    return zh || en || '—';
+  }
+  var COUNTRY_ZH = { US: '美国', CN: '中国', HK: '香港', MO: '澳门', TW: '台湾', JP: '日本', KR: '韩国', SG: '新加坡', GB: '英国', DE: '德国', FR: '法国', CA: '加拿大', AU: '澳大利亚', RU: '俄罗斯', IN: '印度', BR: '巴西', NL: '荷兰', MY: '马来西亚', TH: '泰国', VN: '越南', PH: '菲律宾', ID: '印度尼西亚', TR: '土耳其', AE: '阿联酋', IT: '意大利', ES: '西班牙', SE: '瑞典', CH: '瑞士', AT: '奥地利', IE: '爱尔兰', PL: '波兰', SA: '沙特阿拉伯', ZA: '南非', MX: '墨西哥', AR: '阿根廷' };
+  var TZ_ZH = {
+    'Asia/Shanghai': '中国标准时间', 'Asia/Hong_Kong': '香港时间', 'Asia/Macau': '澳门时间', 'Asia/Taipei': '台北时间',
+    'Asia/Singapore': '新加坡时间', 'Asia/Tokyo': '日本时间', 'Asia/Seoul': '韩国时间', 'Asia/Kolkata': '印度时间',
+    'Asia/Bangkok': '泰国时间', 'Asia/Kuala_Lumpur': '马来西亚时间', 'Asia/Jakarta': '印尼时间', 'Asia/Dubai': '海湾时间',
+    'Asia/Manila': '菲律宾时间', 'Asia/Ho_Chi_Minh': '越南时间', 'Asia/Jerusalem': '以色列时间',
+    'Europe/London': '英国时间', 'Europe/Paris': '巴黎时间', 'Europe/Berlin': '柏林时间', 'Europe/Amsterdam': '阿姆斯特丹时间',
+    'Europe/Frankfurt': '法兰克福时间', 'Europe/Zurich': '苏黎世时间', 'Europe/Madrid': '马德里时间', 'Europe/Rome': '罗马时间',
+    'Europe/Stockholm': '斯德哥尔摩时间', 'Europe/Warsaw': '华沙时间', 'Europe/Moscow': '莫斯科时间', 'Europe/Kyiv': '基辅时间',
+    'America/New_York': '美国东部时间', 'America/Toronto': '多伦多时间', 'America/Chicago': '美国中部时间',
+    'America/Denver': '美国山地时间', 'America/Phoenix': '美国山地时间', 'America/Los_Angeles': '美国西部时间',
+    'America/Vancouver': '温哥华时间', 'America/Mexico_City': '墨西哥城时间', 'America/Sao_Paulo': '圣保罗时间',
+    'Australia/Sydney': '悉尼时间', 'Australia/Melbourne': '墨尔本时间', 'Australia/Perth': '珀斯时间',
+    'Pacific/Auckland': '奥克兰时间', 'UTC': '协调世界时'
+  };
+  function tzBilingual(tz) {
+    tz = String(tz || '').trim();
+    if (!tz) return '—';
+    var zh = TZ_ZH[tz] || '';
+    if (zh) return zh + '（' + tz + '）';
+    return tz;
+  }
+
   var ICONS = {
     ip: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
     geo: '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
@@ -1171,18 +1228,27 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
 
       /* 竖排信息行 */
       var geo = d.geo || {};
+      var zhData = d.zh || {};
       var asnRaw = String((d.asn && d.asn.number) || '');
       var asMatch = asnRaw.match(/AS\d+/i);
       var asNo = asMatch ? asMatch[0].toUpperCase() : (asnRaw || '');
-      var asOwner = (d.asn && d.asn.name) || asnRaw.replace(/^AS\d+\s*/i, '') || (d.asn && d.asn.org) || '';
+      var enOwner = (d.asn && d.asn.name) || asnRaw.replace(/^AS\d+\s*/i, '') || (d.asn && d.asn.org) || '';
+      var zhOwner = String(zhData.as || zhData.asname || '').replace(/^AS\d+\s*/i, '') || zhData.org || '';
+      var enIsp = (d.asn && (d.asn.isp || d.asn.org)) || '';
+      var zhIsp = zhData.isp || zhData.org || '';
       var rows = el('div', 'info-rows');
       rows.appendChild(infoRow('ip', 'IP 地址', d.ip));
-      var geoText = [geo.country, geo.region, geo.city].filter(function (x) { return x; }).join(' / ');
+      var zhGeo = [zhData.country, zhData.region, zhData.city].filter(function (x) { return x; });
+      var enGeo = [geo.country, geo.region, geo.city].filter(function (x) { return x; });
+      var geoText;
+      if (zhGeo.length && enGeo.length) geoText = zhGeo.join(' / ') + '（' + enGeo.join(' / ') + '）';
+      else if (zhGeo.length) geoText = zhGeo.join(' / ') + (geo.countryCode ? '（' + geo.countryCode + '）' : '');
+      else geoText = enGeo.join(' / ') || '—';
       rows.appendChild(infoRow('geo', '地理位置', geoText));
       rows.appendChild(infoRow('loc', '经纬度', geo.loc));
       rows.appendChild(infoRow('asn', 'ASN', asNo));
-      rows.appendChild(infoRow('owner', 'ASN 所有者', asOwner));
-      rows.appendChild(infoRow('isp', 'ISP / 组织', (d.asn && (d.asn.isp || d.asn.org)) || ''));
+      rows.appendChild(infoRow('owner', 'ASN 所有者', bilingual(zhOwner, enOwner)));
+      rows.appendChild(infoRow('isp', 'ISP / 组织', bilingual(zhIsp, enIsp)));
       var typeNode = el('span', null, typeShort(tkey, d.type && d.type.label));
       typeNode.style.color = tkey === 'hosting' ? '#ffb340' : (tkey === 'proxy' ? '#f87171' : (tkey === 'mobile' ? '#60a5fa' : '#34d399'));
       rows.appendChild(infoRow('type', 'IP 类型', typeNode));
@@ -1198,7 +1264,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       scoreNode.style.color = pi.color;
       rows.appendChild(infoRow('score', '综合评分', scoreNode));
       rows.appendChild(infoRow('cidr', 'CIDR', d.cidr));
-      rows.appendChild(infoRow('tz', '时区', geo.timezone));
+      rows.appendChild(infoRow('tz', '时区', tzBilingual(geo.timezone)));
       rows.appendChild(infoRow('elapsed', '查询耗时', d.elapsedMs != null ? d.elapsedMs + ' ms' : ''));
       body.appendChild(rows);
 
