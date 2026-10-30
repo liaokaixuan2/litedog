@@ -2,11 +2,7 @@
   "name": "litedog",
   "version": "1.0.0",
   "private": true,
-  "description": "LiteDog - lightweight website checker (HTTP speed / TCP ping / DNS / port scan)",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "description": "LiteDog - lightweight website checker (Vercel deployment)",
   "engines": {
     "node": ">=18"
   }
