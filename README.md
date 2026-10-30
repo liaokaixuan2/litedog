@@ -1,33 +1,57 @@
-# LiteDog · 轻量级网站检测工具
+# LiteDog
 
-受 [itdog.cn](https://www.itdog.cn/) 启发的轻量级网站检测工具：单文件前端 + 零依赖 Node.js 后端，可一键部署到 Render 等平台。
+轻量级网站 / 网络检测工具箱，零依赖 Node.js 实现，部署于 Vercel（免费 Hobby 计划）。
+
+在线访问：https://ping00.cc.cd
 
 ## 功能
 
-- **网站测速**：对目标 URL 发起真实 HTTP 请求，给出 DNS / TCP / TLS / 首字节 / 下载 各阶段耗时与总耗时；支持浏览器本地节点对照
-- **Ping 测试**：基于 TCP 握手的 Ping（可指定端口），流式实时输出每次结果与丢包率
-- **DNS 查询**：A / AAAA / CNAME / MX / NS / TXT / SOA / CAA 记录
-- **端口检测**：20 个常用端口批量检测，或自定义端口（最多 12 个）
-- **HTTP 检测**：状态码、重定向链、TLS 信息、完整响应头
+- **IP 检测**：出口 IPv4/IPv6、归属地（国家 / 地区 / 城市 / 经纬度 / 时区）、Vercel 边缘节点
+- **网站测速**：HTTP 测速，DNS / TCP / TLS / TTFB / 下载 分阶段耗时
+- **Ping 测试**：TCP 握手模拟 Ping，丢包率与延迟统计
+- **DNS 查询**：A / AAAA / CNAME / MX / NS / TXT / SOA / CAA
+- **端口检测**：常用端口与自定义端口扫描
+- **HTTP 检测**：状态码、响应头、重定向链、TLS 信息
+- **分流测试**：多端点出口 IP 对比，判断代理 / 分流
+- **WebRTC 泄露检测**：浏览器本地收集候选 IP 并分类
+
+## 项目结构
+
+```
+.
+├── vercel.json          # Vercel 配置（函数 maxDuration）
+├── package.json
+├── lib/
+│   ├── core.js          # 核心逻辑（原 server.js），导出 route
+│   └── handler.js       # Vercel Serverless Function 包装
+├── api/                 # Vercel Serverless Functions
+│   ├── ip.js
+│   ├── http.js
+│   ├── ping.js
+│   ├── dns.js
+│   ├── port.js
+│   ├── headers.js
+│   └── nodeinfo.js
+└── public/
+    └── index.html       # 前端单页
+```
+
+## 部署
+
+- Vercel 项目设置：`framework = null`、`outputDirectory = public`
+  （避免 Vercel 把根目录误判为 Node.js Server 入口）
+- 已连接 GitHub，`main` 分支 push 即自动部署
+- 函数最长执行 60s（`vercel.json` 的 `maxDuration`）
 
 ## 本地运行
 
 ```bash
-node server.js
-# 打开 http://localhost:3000
+node lib/core.js            # 默认监听 3000 端口
+# 或
+PORT=3333 node lib/core.js
 ```
 
-## 部署到 Render
+## 说明
 
-1. 将本仓库推送到 GitHub
-2. 在 Render 创建 Web Service，运行时选择 Node
-3. Build Command: `npm install`，Start Command: `npm start`
-
-免费实例闲置约 15 分钟会休眠，首次访问需等待唤醒。
-
-## 安全说明
-
-- 后端对目标地址做了 SSRF 防护：拒绝解析到私有/保留 IP 的目标
-- 响应体超过 2MB 截断，单次请求超时 10 秒
-
-仅用于网络诊断与学习，请勿用于非法用途。
+- 零第三方依赖，全部基于 Node.js 内置模块
+- 检测结果仅供参考
