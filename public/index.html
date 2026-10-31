@@ -237,39 +237,16 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     <div id="httpResults"></div>
   </section>
 
-  <!-- Ping（服务器节点 + Globalping 全国/全球探针） -->
+  <!-- Ping（Globalping 全国/全球探针） -->
   <section class="panel" id="panel-ping">
     <div class="subtabs">
-      <button class="subtab active" data-pmode="server" type="button">服务器测试</button>
-      <button class="subtab" data-pmode="cn" type="button">全国测试</button>
+      <button class="subtab active" data-pmode="cn" type="button">全国测试</button>
       <button class="subtab" data-pmode="global" type="button">全球测试</button>
     </div>
 
-    <div id="pingServerBlock">
+    <div id="pingProbeBlock">
       <div class="quick">
         <span id="pingOwnIpChip" hidden>我的 IP</span>
-        <span onclick="setTarget('pingHost','www.baidu.com')">baidu.com</span>
-        <span onclick="setTarget('pingHost','www.qq.com')">qq.com</span>
-        <span onclick="setTarget('pingHost','1.1.1.1')">1.1.1.1</span>
-      </div>
-      <div class="controls">
-        <input type="text" id="pingHost" class="grow" placeholder="域名或 IP，如 www.example.com" spellcheck="false">
-        <input type="number" id="pingPort" value="443" min="1" max="65535" style="width:80px" title="TCP 端口">
-        <select id="pingCount">
-          <option value="4" selected>4 次</option>
-          <option value="8">8 次</option>
-          <option value="10">10 次</option>
-        </select>
-        <button class="btn primary" id="pingBtn">开始检测</button>
-      </div>
-      <div class="hint">基于 TCP 握手模拟 Ping（服务器节点发起），443=HTTPS / 80=HTTP</div>
-      <div class="error" id="pingError" hidden></div>
-      <div class="summary" id="pingSummary" hidden></div>
-      <div class="console" id="pingConsole" hidden></div>
-    </div>
-
-    <div id="pingProbeBlock" hidden>
-      <div class="quick">
         <span onclick="setTarget('probeTarget','www.baidu.com')">baidu.com</span>
         <span onclick="setTarget('probeTarget','www.qq.com')">qq.com</span>
         <span onclick="setTarget('probeTarget','github.com')">github.com</span>
@@ -530,25 +507,40 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x === t); });
       document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + t.getAttribute('data-tab')); });
       if (t.getAttribute('data-tab') === 'ip' && !ipLoaded) loadIp();
-      if (t.getAttribute('data-tab') === 'ping') maybeAutoPing();
+      if (t.getAttribute('data-tab') === 'ping') maybeAutoProbe();
     });
   });
 
-  // 进入 Ping 标签页时,自动测试访客自己的出口 IP
-  function maybeAutoPing() {
+  // 全站输入框默认自动填入访客 IP（URL 类输入框补 http:// 前缀；只填空框，不打断用户输入）
+  var ownIpBoxIds = ['probeTarget', 'dnsHost', 'portHost', 'ipQuery'];
+  var ownIpUrlBoxIds = ['httpUrl', 'headersUrl'];
+  function fillOwnIpBoxes() {
+    if (!ownIp) return;
+    ownIpBoxIds.forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b && !b.value.trim()) b.value = ownIp;
+    });
+    ownIpUrlBoxIds.forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b && !b.value.trim()) b.value = 'http://' + ownIp;
+    });
+  }
+
+  // 进入 Ping 标签页时,默认全国测试,自动用访客 IP 发起探针测试
+  function maybeAutoProbe() {
     if (pingAutoRan) return;
     var ip = ownIp;
     if (!ip) {
       fetch('/api/ip', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
-        ownIp = d.ip || '';
-        if (!pingAutoRan) maybeAutoPing();
+        if (!ownIp && d.ip) { ownIp = d.ip; fillOwnIpBoxes(); }
+        if (!pingAutoRan) maybeAutoProbe();
       }).catch(function () { /* ignore */ });
       return;
     }
-    if (isPrivateIpJs(ip)) return; // 本地/私有 IP 不自动测试
+    if (!$('#probeTarget').value.trim()) $('#probeTarget').value = ip;
+    if (isPrivateIpJs(ip)) return; // 本地/私有 IP 只填入,不自动测试
     pingAutoRan = true;
-    if (!$('#pingHost').value.trim()) $('#pingHost').value = ip;
-    runPing();
+    runProbe();
   }
 
   // 节点徽标
@@ -683,89 +675,13 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   $('#httpBtn').addEventListener('click', runHttp);
   $('#httpUrl').addEventListener('keydown', function (e) { if (e.key === 'Enter') runHttp(); });
 
-  /* ---------------- Ping ---------------- */
-  var pingRunning = false;
-  function consoleLine(parts) {
-    var d = el('div');
-    parts.forEach(function (p) {
-      d.appendChild(el('span', p.cls || null, p.t));
-    });
-    return d;
-  }
-  async function runPing() {
-    if (pingRunning) return;
-    var panel = $('#panel-ping');
-    clearPanel(panel);
-    var host = $('#pingHost').value.trim();
-    var port = parseInt($('#pingPort').value, 10) || 443;
-    var count = parseInt($('#pingCount').value, 10) || 4;
-    if (!host) { showError(panel, '请输入域名或 IP'); return; }
-    var con = $('#pingConsole');
-    con.innerHTML = '';
-    con.hidden = false;
-    $('#pingSummary').hidden = true;
-    pingRunning = true;
-    busy($('#pingBtn'), true);
-    try {
-      var resp = await fetch('/api/ping?host=' + encodeURIComponent(host) + '&port=' + port + '&count=' + count);
-      await assertOk(resp);
-      await ndjson(resp, function (line) {
-        if (line.type === 'start') {
-          con.appendChild(consoleLine([
-            { t: 'TCP Ping ' + line.host },
-            { t: ' [' + line.ip + '] ', cls: 'dim' },
-            { t: '端口 ' + line.port + '，共 ' + line.count + ' 次：' }
-          ]));
-        } else if (line.type === 'ping') {
-          if (line.ok) {
-            con.appendChild(consoleLine([
-              { t: '第 ' + line.seq + ' 次：', cls: 'dim' },
-              { t: '✓ ', cls: 'ok' },
-              { t: fmtMs(line.ms), cls: 'ok' }
-            ]));
-          } else {
-            con.appendChild(consoleLine([
-              { t: '第 ' + line.seq + ' 次：', cls: 'dim' },
-              { t: '✗ ', cls: 'fail' },
-              { t: line.error || '失败', cls: 'fail' }
-            ]));
-          }
-          con.scrollTop = con.scrollHeight;
-        } else if (line.type === 'error') {
-          throw new Error(line.error);
-        } else if (line.type === 'summary') {
-          var sum = $('#pingSummary');
-          sum.innerHTML = '';
-          sum.appendChild(chip('已发送', line.sent + ' 次'));
-          sum.appendChild(chip('成功', line.received + ' 次'));
-          sum.appendChild(chip('丢包率', line.loss + '%', line.loss > 0 ? '#f87171' : '#34d399'));
-          sum.appendChild(chip('最小', fmtMs(line.min)));
-          sum.appendChild(chip('平均', fmtMs(line.avg), msColor(line.avg)));
-          sum.appendChild(chip('最大', fmtMs(line.max)));
-          sum.hidden = false;
-        }
-      });
-    } catch (e) {
-      showError(panel, 'Ping 失败：' + e.message);
-    } finally {
-      pingRunning = false;
-      busy($('#pingBtn'), false);
-    }
-  }
-  $('#pingBtn').addEventListener('click', runPing);
-  $('#pingHost').addEventListener('keydown', function (e) { if (e.key === 'Enter') runPing(); });
-
-  /* ---------------- Ping 页三种模式（服务器 / 全国探针 / 全球探针） ---------------- */
+  /* ---------------- Ping 页两种模式（全国探针 / 全球探针） ---------------- */
   var probeRunning = false;
   var probeScope = 'cn';
-  var pingMode = 'server';
   document.querySelectorAll('#panel-ping .subtab').forEach(function (s) {
     s.addEventListener('click', function () {
       document.querySelectorAll('#panel-ping .subtab').forEach(function (x) { x.classList.toggle('active', x === s); });
-      pingMode = s.getAttribute('data-pmode');
-      probeScope = pingMode === 'global' ? 'global' : 'cn';
-      $('#pingServerBlock').hidden = pingMode !== 'server';
-      $('#pingProbeBlock').hidden = pingMode === 'server';
+      probeScope = s.getAttribute('data-pmode') === 'global' ? 'global' : 'cn';
     });
   });
   var probeCityZh = { 'Beijing':'北京','Shanghai':'上海','Guangzhou':'广州','Shenzhen':'深圳','Hangzhou':'杭州','Nanjing':'南京','Suzhou':'苏州','Chengdu':'成都','Chongqing':'重庆','Wuhan':'武汉',"Xi'an":'西安','Xian':'西安','Qingdao':'青岛','Jinan':'济南','Xiamen':'厦门','Fuzhou':'福州','Changsha':'长沙','Zhengzhou':'郑州','Shenyang':'沈阳','Dalian':'大连','Harbin':'哈尔滨','Tianjin':'天津','Hefei':'合肥','Kunming':'昆明','Lishui':'丽水','Wuxi':'无锡','Ningbo':'宁波','Dongguan':'东莞','Foshan':'佛山' };
@@ -1187,10 +1103,11 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       if (d.edgeRegion) sum.appendChild(chip('边缘节点', d.edgeRegion));
       sum.hidden = false;
       ownIp = d.ip || '';
+      fillOwnIpBoxes();
       var ownChip = document.getElementById('pingOwnIpChip');
       if (ownIp && !isPrivateIpJs(ownIp)) {
         ownChip.hidden = false;
-        ownChip.onclick = function () { setTarget('pingHost', ownIp); };
+        ownChip.onclick = function () { setTarget('probeTarget', ownIp); };
       }
       ipLoaded = true;
       loadIpCheck();
