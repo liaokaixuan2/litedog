@@ -3,5 +3,8 @@
     "api/*.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/stats", "destination": "/stats.html" }
+  ]
 }
