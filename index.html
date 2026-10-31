@@ -823,9 +823,22 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     box.hidden = false;
   }
 
+  // Ping 全部探针都 100% 丢包时给出解释（机房/防火墙禁 ICMP 很常见）
+  function probeAllLost(type, data) {
+    if (type !== 'ping') return false;
+    var rs = (data && data.results) || [];
+    if (!rs.length) return false;
+    return rs.every(function (r) {
+      var res = (r && r.result) || {};
+      if (!res.status || res.status === 'in-progress') return false;
+      return res.stats && res.stats.rcv === 0;
+    });
+  }
+
   async function runProbe() {
     if (probeRunning) return;
     $('#probeError').hidden = true;
+    $('#probeSummary').hidden = true; // 立即清掉上一次的汇总,避免与本次结果混淆
     var type = $('#probeType').value;
     var limit = parseInt($('#probeLimit').value, 10) || 10;
     var norm = normalizeProbeTarget(type, $('#probeTarget').value);
@@ -873,6 +886,9 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       box.innerHTML = '';
       renderProbeTable(box, type, data);
       renderProbeSummary(type, data);
+      if (probeAllLost(type, data)) {
+        box.appendChild(el('div', 'hint', '全部超时：目标没有响应 ICMP 探测（机房 / 防火墙禁 ping 很常见；如果你在挂代理，这个 IP 通常就是代理的出口 IP，不代表网络不通）。主机未必离线，可切换「网站测速 (HTTP)」用 TCP 验证连通性，或改用域名测试。'));
+      }
     } catch (e) {
       probeShowError('评测失败：' + e.message);
     } finally {
