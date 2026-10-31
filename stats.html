@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>LiteDog · 访客统计</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0e17;--card:#101724;--card2:#0c1320;--text:#e6eaf2;--muted:#8b95a9;--line:#223047;--blue:#6d9aff;--blue-soft:rgba(109,154,255,.13);--ok:#34d399;--warn:#fbbf24;--fail:#f87171;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 -apple-system,'PingFang SC','Microsoft YaHei',sans-serif;padding:18px 14px 40px;}
+.wrap{max-width:980px;margin:0 auto;}
+h1{font-size:18px;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:12px;margin-bottom:14px;}
+.gate{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:18px;max-width:420px;margin:60px auto 0;}
+.gate input{width:100%;background:#0a0f1a;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px 12px;font-size:14px;font-family:ui-monospace,Consolas,monospace;margin:8px 0 12px;}
+.gate input:focus{outline:0;border-color:var(--blue);}
+.btn{border:0;background:var(--blue);color:#fff;font-weight:600;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:14px;width:100%;}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:500;}
+.err{color:var(--fail);font-size:13px;margin-top:10px;min-height:18px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 14px;font-size:13px;color:var(--muted);}
+.chip b{color:var(--blue);font-size:16px;margin-left:6px;font-family:ui-monospace,Consolas,monospace;}
+.day{background:var(--card);border:1px solid var(--line);border-radius:11px;margin-bottom:12px;overflow:hidden;}
+.day-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--card2);cursor:pointer;}
+.day-head b{font-size:14px;font-family:ui-monospace,Consolas,monospace;}
+.day-head .meta{color:var(--muted);font-size:12px;}
+.day-head .meta b{color:var(--text);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{color:var(--muted);font-weight:500;text-align:left;padding:8px 14px;border-bottom:1px solid var(--line);white-space:nowrap;}
+td{padding:7px 14px;border-bottom:1px solid rgba(34,48,71,.45);vertical-align:top;}
+tr:last-child td{border-bottom:0;}
+td.mono{font-family:ui-monospace,Consolas,monospace;}
+td .ua{color:var(--muted);font-size:12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.geo{color:var(--muted);font-size:12px;}
+.geo.done{color:var(--text);}
+.n{display:inline-block;min-width:26px;text-align:center;background:var(--blue-soft);color:var(--blue);border-radius:6px;padding:0 6px;font-family:ui-monospace,Consolas,monospace;}
+.empty{color:var(--muted);text-align:center;padding:18px;}
+.refresh{margin-left:auto;display:flex;gap:8px;align-items:center;}
+button.mini{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:12px;}
+button.mini:hover{border-color:var(--blue);color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div id="gate" class="gate" hidden>
+    <h1>LiteDog 访客统计</h1>
+    <div class="sub">请输入访问密钥（Vercel 环境变量 STATS_KEY）</div>
+    <input type="password" id="keyInput" placeholder="STATS_KEY" autocomplete="off">
+    <button class="btn" id="keyBtn">进入</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+  <div id="board" hidden>
+    <h1>LiteDog 访客统计 <span class="sub" style="display:inline">· ping00.cc.cd</span></h1>
+    <div class="sub">按北京时间(UTC+8)切日 · 以 IP 为访客标识 · 最近 14 天 ·
+      <button class="mini" id="logout">更换密钥</button>
+      <span class="refresh"><button class="mini" id="reload">刷新数据</button></span>
+    </div>
+    <div class="chips" id="summary"></div>
+    <div id="days"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var KEY = localStorage.getItem('ldStatsKey') || '';
+  var geoCache;
+  try { geoCache = JSON.parse(localStorage.getItem('ldGeoCache') || '{}'); } catch (e) { geoCache = {}; }
+  function saveGeoCache() { try { localStorage.setItem('ldGeoCache', JSON.stringify(geoCache)); } catch (e) { /* ignore */ } }
+
+  function showGate(msg) {
+    $('#board').hidden = true;
+    $('#gate').hidden = false;
+    $('#gateErr').textContent = msg || '';
+    $('#keyInput').value = KEY;
+  }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+  function uaShort(ua) {
+    if (!ua) return '—';
+    var m = ua.match(/(Edg|Chrome|Safari|Firefox|MSIE|Trident|curl|Wget|Python|bot|Spider|Headless)[^\s;)]*/i);
+    var os = /Windows/i.test(ua) ? 'Win' : /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iOS/i.test(ua) ? 'iOS' : /Macintosh/i.test(ua) ? 'Mac' : /Linux/i.test(ua) ? 'Linux' : '';
+    var br = m ? m[0].replace(/Edg/, 'Edge').replace(/Trident/, 'IE') : '未知';
+    return br + (os ? ' · ' + os : '');
+  }
+  function fmtTime(t) {
+    if (!t) return '—';
+    var d = new Date(t + 8 * 3600 * 1000);
+    return d.toISOString().slice(5, 16).replace('T', ' ');
+  }
+
+  var pendingIps = [], geoBusy = false;
+  function queueGeo(ip) {
+    if (geoCache[ip] && Date.now() - geoCache[ip].ts < 7 * 86400000) { fillGeo(ip, geoCache[ip].data); return; }
+    if (pendingIps.indexOf(ip) === -1) pendingIps.push(ip);
+    drainGeo();
+  }
+  function fillGeo(ip, data) {
+    document.querySelectorAll('span.geo[data-ip="' + CSS.escape(ip) + '"]').forEach(function (el) {
+      var parts = [];
+      if (data.country) parts.push(data.country + (data.region ? ' ' + data.region : '') + (data.city ? ' ' + data.city : ''));
+      if (data.isp) parts.push(data.isp);
+      if (data.as) parts.push(data.as);
+      el.textContent = parts.length ? parts.join(' · ') : (data.source || '无信息');
+      el.classList.add('done');
+    });
+  }
+  function drainGeo() {
+    if (geoBusy || !pendingIps.length) return;
+    geoBusy = true;
+    var ip = pendingIps.shift();
+    fetch('/api/ipgeo?key=' + encodeURIComponent(KEY) + '&ip=' + encodeURIComponent(ip))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.error) { geoCache[ip] = { data: d, ts: Date.now() }; saveGeoCache(); fillGeo(ip, d); }
+      })
+      .catch(function () { /* ignore */ })
+      .finally(function () { geoBusy = false; setTimeout(drainGeo, 300); });
+  }
+
+  function render(data) {
+    $('#gate').hidden = true;
+    $('#board').hidden = false;
+    var days = data.days || [];
+    var today = days[0] || { uv: 0, pv: 0 };
+    var yesterday = days[1] || { uv: 0 };
+    var week = 0;
+    days.slice(0, 7).forEach(function (d) { week += d.uv || 0; });
+    $('#summary').innerHTML =
+      '<div class="chip">今日独立访客<b>' + today.uv + '</b></div>' +
+      '<div class="chip">今日访问次数<b>' + today.pv + '</b></div>' +
+      '<div class="chip">昨日独立访客<b>' + yesterday.uv + '</b></div>' +
+      '<div class="chip">近 7 日访客合计<b>' + week + '</b></div>';
+    $('#days').innerHTML = days.map(function (d) {
+      var rows = d.ips.map(function (r) {
+        return '<tr>' +
+          '<td class="mono">' + esc(r.ip) + '</td>' +
+          '<td><span class="n">' + r.n + '</span></td>' +
+          '<td class="mono" style="color:var(--muted)">' + fmtTime(r.t) + '</td>' +
+          '<td><span class="geo" data-ip="' + esc(r.ip) + '">查询中…</span></td>' +
+          '<td>' + esc(r.ref || '直接访问') + '<div class="ua" title="' + esc(r.ua) + '">' + esc(uaShort(r.ua)) + '</div></td>' +
+          '</tr>';
+      }).join('');
+      return '<div class="day">' +
+        '<div class="day-head"><b>' + esc(d.date) + '</b><span class="meta">独立访客 <b>' + d.uv + '</b> · 访问次数 <b>' + d.pv + '</b></span></div>' +
+        (rows ? '<div style="overflow-x:auto"><table><tr><th>IP</th><th>次数</th><th>最后访问</th><th>归属地</th><th>来源 / 设备</th></tr>' + rows + '</table></div>' : '<div class="empty">该日无访问记录</div>') +
+        '</div>';
+    }).join('');
+    days.forEach(function (d) { d.ips.forEach(function (r) { queueGeo(r.ip); }); });
+  }
+
+  function load() {
+    if (!KEY) return showGate('');
+    $('#reload').textContent = '加载中…';
+    fetch('/api/stats?key=' + encodeURIComponent(KEY) + '&days=14')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        $('#reload').textContent = '刷新数据';
+        if (d.error) return showGate(d.error);
+        render(d);
+      })
+      .catch(function (e) { $('#reload').textContent = '刷新数据'; showGate('加载失败: ' + e.message); });
+  }
+
+  $('#keyBtn').addEventListener('click', function () {
+    KEY = $('#keyInput').value.trim();
+    if (!KEY) { $('#gateErr').textContent = '请输入密钥'; return; }
+    localStorage.setItem('ldStatsKey', KEY);
+    load();
+  });
+  $('#keyInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#keyBtn').click(); });
+  $('#logout').addEventListener('click', function () { KEY = ''; localStorage.removeItem('ldStatsKey'); showGate(''); });
+  $('#reload').addEventListener('click', load);
+
+  if (KEY) load(); else showGate('');
+})();
+</script>
+</body>
+</html>

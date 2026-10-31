@@ -15,6 +15,7 @@
 - **HTTP 检测**：状态码、响应头、重定向链、TLS 信息
 - **分流测试**：多端点出口 IP 对比，判断代理 / 分流
 - **WebRTC 泄露检测**：浏览器本地收集候选 IP 并分类
+- **访客统计**（可选，需配置 Upstash）：每次页面加载自动记录访客 IP / UA / 来源到 Upstash Redis（按北京时间切日，保留 30 天）。访问 `/stats`（需密钥）查看每日独立访客数、访问次数与 IP 明细列表（含归属地 / 运营商 / ASN，经 ip-api.com 查询并缓存）。未配置环境变量时统计自动空转，不影响任何功能
 - **IP 质量检测**：默认检测访客出口 IP，也支持在顶部查询框输入任意 IP 或域名（`/api/ipcheck?host=`）。基于 IPinfo + ip-api.com + Scamalytics，识别 IP 类型（机房 / 住宅 / 移动 / 代理）、风控值、Scamalytics 欺诈值、CIDR 网段、原生/广播、共享人数、场景评分
 
 ## 项目结构
@@ -34,9 +35,13 @@
 │   ├── dns.js
 │   ├── port.js
 │   ├── headers.js
-│   └── nodeinfo.js
+│   ├── nodeinfo.js
+│   ├── stats.js         # 访客统计读取(需 STATS_KEY)
+│   └── ipgeo.js         # IP 归属地查询(需 STATS_KEY)
+├── stats.html           # 访客统计管理页(/stats,需密钥)
 └── public/
     ├── index.html       # 前端单页
+    ├── stats.html       # 同 stats.html(Vercel 静态服务用)
     └── vendor/          # 本地静态资源（echarts.min.js / china.json / world.json 地图数据）
 ```
 
@@ -48,6 +53,9 @@
 - 函数最长执行 60s（`vercel.json` 的 `maxDuration`）
 - 环境变量 `IPINFO_TOKEN`（IPinfo 访问令牌，用于 IP 质量检测）
 - 环境变量 `GLOBALPING_TOKEN`（Globalping API 令牌，用于评测标签页；未设置时使用代码内内置 token）
+- 环境变量 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`（Upstash Redis REST 凭据，用于访客统计存储；免费版即可）
+- 环境变量 `STATS_KEY`（访客统计页 `/stats` 的访问密钥，自定义任意字符串；未设置时统计接口返回 403）
+- 访客统计开启步骤：upstash.com 免费注册（GitHub 登录）→ Create Database（REST API 区域任意）→ 把 REST URL 与 REST TOKEN 填入 Vercel 环境变量 → 自定义 `STATS_KEY` → Redeploy 后访问 `https://ping00.cc.cd/stats`。免费版每日约 1 万条命令（每次访问消耗 5 条），超出后统计自动静默停止，不影响网站
 
 ## 本地运行
 
