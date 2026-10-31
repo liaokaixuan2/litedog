@@ -82,6 +82,16 @@ html[data-theme="light"] .btn.primary{color:#fff;}
 .table-scroll{overflow-x:auto;}
 .net-cell{display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;}
 pre.record-item{white-space:pre-wrap;margin:0;font-size:12px;line-height:1.6;}
+/* ---- 延迟地图 ---- */
+.map-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--card2);padding:10px 12px 6px;margin:2px 0 10px;}
+.map-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:2px 2px 4px;}
+.map-head b{font-size:13px;color:var(--text);font-weight:600;}
+.map-head span{font-size:12px;color:var(--muted);}
+.map-box{height:400px;width:100%;min-width:0;}
+.map-box.small{height:320px;}
+.map-legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 2px 2px;font-size:12px;color:var(--muted);}
+.map-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1.5px;}
+.map-legend i.nodata{background:#4d5563;}
 /* ---- IP/域名查询框 ---- */
 .ip-search{display:flex;gap:8px;margin:2px 0 10px;align-items:stretch;}
 .ip-search-box{flex:1;display:flex;align-items:center;gap:8px;background:var(--input-bg);border:1px solid var(--line);border-radius:9px;padding:0 13px;min-width:0;}
@@ -264,6 +274,20 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
         </select>
         <button class="btn primary" id="probeBtn">开始评测</button>
       </div>
+      <div class="map-card" id="probeMapCard">
+        <div class="map-head"><b id="probeMapTitle">全国延迟地图</b><span id="probeMapMeta">发起评测后显示</span></div>
+        <div class="map-box" id="mapChina"></div>
+        <div class="map-box small" id="mapWorld" hidden></div>
+        <div class="map-legend">
+          <span><i style="background:#0f9d43"></i>≤50ms</span>
+          <span><i style="background:#3fbf4e"></i>51-100ms</span>
+          <span><i style="background:#a8d84f"></i>101-200ms</span>
+          <span><i style="background:#f5c93f"></i>201-250ms</span>
+          <span><i style="background:#f0913a"></i>&gt;250ms</span>
+          <span><i style="background:#e23c3c"></i>超时</span>
+          <span><i class="nodata"></i>无数据</span>
+        </div>
+      </div>
       <div class="hint">全国测试使用中国区社区探针、全球测试使用全球探针（Globalping 网络）；Ping 发 4 个 ICMP 包，网站测速走 HTTPS GET /。结果逐探针实时刷新。</div>
       <div class="error" id="probeError" hidden></div>
       <div class="summary" id="probeSummary" hidden></div>
@@ -374,6 +398,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   <a id="ghLink" href="https://github.com/liaokaixuan2/litedog" target="_blank" rel="noopener">GitHub 源码</a>
 </footer>
 
+<script src="/vendor/echarts.min.js"></script>
 <script>
 (function () {
   'use strict';
@@ -682,7 +707,183 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     s.addEventListener('click', function () {
       document.querySelectorAll('#panel-ping .subtab').forEach(function (x) { x.classList.toggle('active', x === s); });
       probeScope = s.getAttribute('data-pmode') === 'global' ? 'global' : 'cn';
+      renderProbeMap();
     });
+  });
+
+  /* ---------------- 延迟地图（ECharts：全国=中国省份 / 全球=世界国家/地区） ---------------- */
+  var mapCharts = { cn: null, global: null };
+  var mapLastData = { cn: null, global: null };
+  var mapGeoReady = {};
+  var mapGeo = {};
+  function loadMapGeo(scope) {
+    if (!mapGeoReady[scope]) {
+      mapGeoReady[scope] = fetch(scope === 'cn' ? '/vendor/china.json' : '/vendor/world.json')
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          echarts.registerMap(scope === 'cn' ? 'china' : 'world', j);
+          mapGeo[scope] = j;
+          return j;
+        });
+    }
+    return mapGeoReady[scope];
+  }
+  function shortProv(n) { return (n || '').replace(/(特别行政区|维吾尔|回族|壮族|自治区|省|市)/g, ''); }
+  function featArea(f) { // 特征外接矩形面积(近似),用于同一 ISO2 多特征时取主领土
+    var b = [Infinity, Infinity, -Infinity, -Infinity];
+    var walk = function (c) {
+      if (typeof c[0] === 'number') {
+        if (c[0] < b[0]) b[0] = c[0];
+        if (c[1] < b[1]) b[1] = c[1];
+        if (c[0] > b[2]) b[2] = c[0];
+        if (c[1] > b[3]) b[3] = c[1];
+      } else { for (var i = 0; i < c.length; i++) walk(c[i]); }
+    };
+    walk((f.geometry || {}).coordinates);
+    return (b[2] - b[0]) * (b[3] - b[1]);
+  }
+
+  /* MAP-PURE-START */
+  var probeCityProvince = { Beijing:'北京', Shanghai:'上海', Tianjin:'天津', Chongqing:'重庆',
+    Guangzhou:'广东', Shenzhen:'广东', Dongguan:'广东', Foshan:'广东', Huizhou:'广东', Zhuhai:'广东', Shantou:'广东', Zhanjiang:'广东', Zhongshan:'广东',
+    Hangzhou:'浙江', Ningbo:'浙江', Wenzhou:'浙江', Jinhua:'浙江', Lishui:'浙江', Shaoxing:'浙江', Jiaxing:'浙江', Taizhou:'浙江',
+    Nanjing:'江苏', Suzhou:'江苏', Wuxi:'江苏', Changzhou:'江苏', Nantong:'江苏', Xuzhou:'江苏', Yangzhou:'江苏', Yancheng:'江苏',
+    Chengdu:'四川', Mianyang:'四川', Deyang:'四川',
+    Wuhan:'湖北', Xiangyang:'湖北', Yichang:'湖北',
+    "Xi'an":'陕西', Xian:'陕西', Xianyang:'陕西',
+    Qingdao:'山东', Jinan:'山东', Yantai:'山东', Weifang:'山东', Linyi:'山东', Zibo:'山东',
+    Xiamen:'福建', Fuzhou:'福建', Quanzhou:'福建', Putian:'福建', Zhangzhou:'福建',
+    Changsha:'湖南', Zhuzhou:'湖南', Hengyang:'湖南',
+    Zhengzhou:'河南', Luoyang:'河南', Kaifeng:'河南',
+    Shenyang:'辽宁', Dalian:'辽宁', Anshan:'辽宁', Jinzhou:'辽宁',
+    Harbin:'黑龙江', Daqing:'黑龙江', Qiqihar:'黑龙江',
+    Changchun:'吉林', Jilin:'吉林',
+    Hefei:'安徽', Wuhu:'安徽', Bengbu:'安徽',
+    Kunming:'云南', Dali:'云南', Lijiang:'云南',
+    Nanning:'广西', Guilin:'广西', Liuzhou:'广西',
+    Guiyang:'贵州', Zunyi:'贵州',
+    Nanchang:'江西', Ganzhou:'江西', Jiujiang:'江西',
+    Shijiazhuang:'河北', Tangshan:'河北', Baoding:'河北', Langfang:'河北',
+    Taiyuan:'山西', Datong:'山西',
+    Hohhot:'内蒙古', Baotou:'内蒙古',
+    Haikou:'海南', Sanya:'海南',
+    Lanzhou:'甘肃', Xining:'青海', Yinchuan:'宁夏', Urumqi:'新疆', Lhasa:'西藏',
+    'Hong Kong':'香港', Hongkong:'香港', Macau:'澳门', Taipei:'台湾', Kaohsiung:'台湾' };
+  var probeCityProvinceLower = {};
+  Object.keys(probeCityProvince).forEach(function (k) { probeCityProvinceLower[k.toLowerCase()] = probeCityProvince[k]; });
+  function probeGroupKey(scope, probe) {
+    if (scope === 'cn') return probeCityProvinceLower[(probe.city || '').toLowerCase()] || null;
+    return probe.country || null;
+  }
+  function probeRegionAgg(type, rows) {
+    var ok = [], lost = 0, pend = 0;
+    rows.forEach(function (r) {
+      var res = (r && r.result) || {};
+      if (!res.status || res.status === 'in-progress') { pend++; return; }
+      var v = null, loss = null;
+      if (type === 'ping') {
+        if (res.stats && res.stats.avg != null && res.stats.rcv > 0) { v = res.stats.avg; loss = res.stats.loss; }
+      } else if (res.timings && res.timings.total != null) {
+        v = res.timings.total; loss = 0;
+      }
+      if (v != null) ok.push({ v: v, loss: loss }); else lost++;
+    });
+    if (!rows.length) return { state: 'none' };
+    if (ok.length) {
+      var sum = 0, mn = Infinity, mx = 0, ls = 0, lsn = 0;
+      ok.forEach(function (o) {
+        sum += o.v;
+        if (o.v < mn) mn = o.v;
+        if (o.v > mx) mx = o.v;
+        if (o.loss != null) { ls += o.loss; lsn++; }
+      });
+      return { state: 'ok', v: Math.round(sum / ok.length), min: Math.round(mn), max: Math.round(mx),
+        loss: lsn ? Math.round(ls / lsn) : null, count: rows.length };
+    }
+    if (pend) return { state: 'pending', count: rows.length };
+    return { state: 'timeout', count: rows.length };
+  }
+  /* MAP-PURE-END */
+
+  function renderProbeMap(forceType) {
+    var card = $('#probeMapCard');
+    if (!window.echarts) { card.hidden = true; return; }
+    var scope = probeScope;
+    var isCn = scope === 'cn';
+    $('#probeMapTitle').textContent = isCn ? '全国延迟地图' : '全球延迟地图';
+    $('#mapChina').hidden = !isCn;
+    $('#mapWorld').hidden = isCn;
+    var meta = $('#probeMapMeta');
+    var data = mapLastData[scope];
+    if (!data) { meta.textContent = '发起评测后显示'; return; }
+    loadMapGeo(scope).then(function (geo) {
+      if (probeScope !== scope) return; // 已切到另一模式,丢弃过期渲染
+      var type = forceType || $('#probeType').value;
+      var rows = data.results || [];
+      var byKey = {};
+      rows.forEach(function (r) {
+        var k = probeGroupKey(scope, r.probe || {});
+        if (!k) return;
+        (byKey[k] = byKey[k] || []).push(r);
+      });
+      var nameByKey = {}, zhByName = {}, areaByKey = {};
+      (geo.features || []).forEach(function (f) {
+        var p = f.properties || {};
+        if (isCn) { if (p.name) nameByKey[shortProv(p.name)] = p.name; }
+        else {
+          // 同一 ISO2 可能对应多个特征(如 AU:澳大利亚大陆 + Ashmore 群岛),取面积最大的作为该国家
+          if (p.iso2) {
+            var a = featArea(f);
+            if (!nameByKey[p.iso2] || a > areaByKey[p.iso2]) { nameByKey[p.iso2] = p.name; areaByKey[p.iso2] = a; }
+          }
+          if (p.name) zhByName[p.name] = p.zh || '';
+        }
+      });
+      var seriesData = [], groups = {};
+      Object.keys(byKey).forEach(function (k) {
+        var name = nameByKey[k];
+        if (!name) return;
+        var g = probeRegionAgg(type, byKey[k]);
+        if (g.state === 'none' || g.state === 'pending') return;
+        groups[name] = g;
+        var item = { name: name };
+        if (g.state === 'ok') { item.value = g.v; }
+        else { item.itemStyle = { areaColor: '#e23c3c' }; } // 不带 value:visualMap 不介入,红色 override 生效
+        seriesData.push(item);
+      });
+      var chart = mapCharts[scope];
+      if (!chart) chart = mapCharts[scope] = echarts.init($(isCn ? '#mapChina' : '#mapWorld'));
+      var done = rows.length > 0 && rows.every(function (r) {
+        var s = (r.result || {}).status;
+        return s && s !== 'in-progress';
+      });
+      meta.textContent = done ? (isCn ? '按省份着色 · 共 ' + rows.length + ' 个探针' : '按国家/地区着色 · 共 ' + rows.length + ' 个探针') : '评测中…';
+      chart.setOption({
+        tooltip: { trigger: 'item', backgroundColor: 'rgba(13,19,32,.94)', borderColor: 'rgba(109,154,255,.4)',
+          textStyle: { color: '#e6eaf2', fontSize: 12 },
+          formatter: function (p) {
+            var g = groups[p.name];
+            var label = scope === 'cn' ? p.name : ((zhByName[p.name] && zhByName[p.name] !== p.name) ? zhByName[p.name] + ' · ' + p.name : p.name);
+            if (!g) return label + '<br/>无探针数据';
+            if (g.state === 'timeout') return label + '<br/>' + g.count + ' 个探针全部超时';
+            return label + '<br/>' + g.count + ' 个探针 · ' + (type === 'ping' ? '平均 ' : '总耗时 ') + g.v + 'ms（最快 ' + g.min + ' / 最慢 ' + g.max + '）' + (g.loss != null ? '<br/>丢包率 ' + g.loss + '%' : '');
+          } },
+        visualMap: { show: false, seriesIndex: 0, pieces: [
+          { lte: 50, color: '#0f9d43' }, { gt: 50, lte: 100, color: '#3fbf4e' },
+          { gt: 100, lte: 200, color: '#a8d84f' }, { gt: 200, lte: 250, color: '#f5c93f' },
+          { gt: 250, color: '#f0913a' } ] },
+        series: [ {
+          type: 'map', map: isCn ? 'china' : 'world', roam: true, selectedMode: false,
+          scaleLimit: { min: 0.7, max: 8 },
+          itemStyle: { areaColor: '#4d5563', borderColor: 'rgba(10,14,23,.65)', borderWidth: 0.6 },
+          emphasis: { label: { show: true, color: '#f4f6fb', fontSize: 11 }, itemStyle: { areaColor: '#5d6575' } },
+          data: seriesData
+        } ]
+      }, true);
+    }).catch(function () { meta.textContent = '地图数据加载失败'; });
+  }
+  window.addEventListener('resize', function () {
+    Object.keys(mapCharts).forEach(function (k) { if (mapCharts[k]) mapCharts[k].resize(); });
   });
   var probeCityZh = { 'Beijing':'北京','Shanghai':'上海','Guangzhou':'广州','Shenzhen':'深圳','Hangzhou':'杭州','Nanjing':'南京','Suzhou':'苏州','Chengdu':'成都','Chongqing':'重庆','Wuhan':'武汉',"Xi'an":'西安','Xian':'西安','Qingdao':'青岛','Jinan':'济南','Xiamen':'厦门','Fuzhou':'福州','Changsha':'长沙','Zhengzhou':'郑州','Shenyang':'沈阳','Dalian':'大连','Harbin':'哈尔滨','Tianjin':'天津','Hefei':'合肥','Kunming':'昆明','Lishui':'丽水','Wuxi':'无锡','Ningbo':'宁波','Dongguan':'东莞','Foshan':'佛山' };
   var probeCountryZh = { CN:'中国', HK:'中国香港', MO:'中国澳门', TW:'中国台湾', JP:'日本', SG:'新加坡', US:'美国', DE:'德国', FR:'法国', GB:'英国', KR:'韩国', IN:'印度', AU:'澳大利亚', CA:'加拿大', RU:'俄罗斯', NL:'荷兰', BR:'巴西', MY:'马来西亚', TH:'泰国', ID:'印尼', VN:'越南', PH:'菲律宾', AE:'阿联酋', TR:'土耳其', IT:'意大利', ES:'西班牙', PL:'波兰', SE:'瑞典', FI:'芬兰', NO:'挪威', AT:'奥地利', CH:'瑞士', IE:'爱尔兰', CZ:'捷克', RO:'罗马尼亚', UA:'乌克兰', MX:'墨西哥', AR:'阿根廷', ZA:'南非', IL:'以色列', KZ:'哈萨克斯坦', PK:'巴基斯坦', MN:'蒙古' };
@@ -843,10 +1044,11 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     var limit = parseInt($('#probeLimit').value, 10) || 10;
     var norm = normalizeProbeTarget(type, $('#probeTarget').value);
     if (!norm || !norm.target) { probeShowError('请输入有效的目标'); return; }
+    var runScope = probeScope; // 固定本次评测的模式,轮询结果写入对应缓存
     var payload = {
       type: type,
       target: norm.target,
-      scope: probeScope,
+      scope: runScope,
       limit: limit,
       measurementOptions: type === 'http'
         ? { protocol: norm.protocol, port: norm.port, request: { method: 'GET', path: norm.path || '/' } }
@@ -866,7 +1068,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       await assertOk(resp);
       var created = await resp.json();
       if (!created || !created.id) throw new Error('未创建测量任务');
-      box.appendChild(el('div', 'hint', '任务已下发到 ' + (created.probesCount || '?') + ' 个' + (probeScope === 'cn' ? '中国区' : '全球') + '探针，正在收集结果…'));
+      box.appendChild(el('div', 'hint', '任务已下发到 ' + (created.probesCount || '?') + ' 个' + (runScope === 'cn' ? '中国区' : '全球') + '探针，正在收集结果…'));
       var data = null;
       var deadline = Date.now() + 90000;
       while (Date.now() < deadline) {
@@ -879,6 +1081,8 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
         data = await gr.json();
         box.innerHTML = '';
         var done = renderProbeTable(box, type, data);
+        mapLastData[runScope] = data;
+        renderProbeMap(type);
         var total = (data.results || []).length;
         if (data.status !== 'in-progress' || (total > 0 && done === total)) break;
       }
@@ -886,6 +1090,8 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       box.innerHTML = '';
       renderProbeTable(box, type, data);
       renderProbeSummary(type, data);
+      mapLastData[runScope] = data;
+      renderProbeMap(type);
       if (probeAllLost(type, data)) {
         box.appendChild(el('div', 'hint', '全部超时：目标没有响应 ICMP 探测（机房 / 防火墙禁 ping 很常见；如果你在挂代理，这个 IP 通常就是代理的出口 IP，不代表网络不通）。主机未必离线，可切换「网站测速 (HTTP)」用 TCP 验证连通性，或改用域名测试。'));
       }

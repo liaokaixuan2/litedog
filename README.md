@@ -9,6 +9,7 @@
 - **IP 检测**：出口 IPv4/IPv6、归属地（国家 / 地区 / 城市 / 经纬度 / 时区）、Vercel 边缘节点
 - **网站测速**：HTTP 测速，DNS / TCP / TLS / TTFB / 下载 分阶段耗时
 - **Ping 测试**：基于 Globalping 探针的拨测，支持 ICMP Ping（4 包，延迟 / 丢包率）与网站测速（HTTP 分阶段耗时 / 状态码）；可切换「全国测试」（中国区探针，默认）/「全球测试」（全球探针），进入 Ping 标签页自动用访客出口 IP 发起全国测试，结果逐探针实时刷新
+- **延迟地图**：全国测试显示中国省份地图、全球测试显示世界地图（ECharts 5，本地自托管于 `public/vendor/`），按区域着色：≤50ms 深绿 / 51-100 绿 / 101-200 黄绿 / 201-250 黄 / >250 橙 / 全超时红 / 无探针灰，支持缩放拖动与悬停查看区域聚合详情
 - **DNS 查询**：A / AAAA / CNAME / MX / NS / TXT / SOA / CAA
 - **端口检测**：常用端口与自定义端口扫描
 - **HTTP 检测**：状态码、响应头、重定向链、TLS 信息
@@ -35,7 +36,8 @@
 │   ├── headers.js
 │   └── nodeinfo.js
 └── public/
-    └── index.html       # 前端单页
+    ├── index.html       # 前端单页
+    └── vendor/          # 本地静态资源（echarts.min.js / china.json / world.json 地图数据）
 ```
 
 ## 部署
