@@ -206,7 +206,6 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     <button class="tab active" data-tab="ip">IP 检测</button>
     <button class="tab" data-tab="ping">Ping 测试</button>
     <button class="tab" data-tab="http">网站测速</button>
-    <button class="tab" data-tab="probe">评测</button>
     <button class="tab" data-tab="dns">DNS 查询</button>
     <button class="tab" data-tab="port">端口检测</button>
     <button class="tab" data-tab="headers">HTTP 检测</button>
@@ -238,58 +237,61 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     <div id="httpResults"></div>
   </section>
 
-  <!-- Ping -->
+  <!-- Ping（服务器节点 + Globalping 全国/全球探针） -->
   <section class="panel" id="panel-ping">
-    <div class="quick">
-      <span id="pingOwnIpChip" hidden>我的 IP</span>
-      <span onclick="setTarget('pingHost','www.baidu.com')">baidu.com</span>
-      <span onclick="setTarget('pingHost','www.qq.com')">qq.com</span>
-      <span onclick="setTarget('pingHost','1.1.1.1')">1.1.1.1</span>
-    </div>
-    <div class="controls">
-      <input type="text" id="pingHost" class="grow" placeholder="域名或 IP，如 www.example.com" spellcheck="false">
-      <input type="number" id="pingPort" value="443" min="1" max="65535" style="width:80px" title="TCP 端口">
-      <select id="pingCount">
-        <option value="4" selected>4 次</option>
-        <option value="8">8 次</option>
-        <option value="10">10 次</option>
-      </select>
-      <button class="btn primary" id="pingBtn">开始检测</button>
-    </div>
-    <div class="hint">基于 TCP 握手模拟 Ping（服务器节点发起），443=HTTPS / 80=HTTP</div>
-    <div class="error" id="pingError" hidden></div>
-    <div class="summary" id="pingSummary" hidden></div>
-    <div class="console" id="pingConsole" hidden></div>
-  </section>
-
-  <!-- 评测（Globalping 探针：全国 / 全球） -->
-  <section class="panel" id="panel-probe">
-    <div class="quick">
-      <span onclick="setTarget('probeTarget','www.baidu.com')">baidu.com</span>
-      <span onclick="setTarget('probeTarget','www.qq.com')">qq.com</span>
-      <span onclick="setTarget('probeTarget','github.com')">github.com</span>
-    </div>
     <div class="subtabs">
-      <button class="subtab active" data-scope="cn" type="button">全国测试</button>
-      <button class="subtab" data-scope="global" type="button">全球测试</button>
+      <button class="subtab active" data-pmode="server" type="button">服务器测试</button>
+      <button class="subtab" data-pmode="cn" type="button">全国测试</button>
+      <button class="subtab" data-pmode="global" type="button">全球测试</button>
     </div>
-    <div class="controls">
-      <input type="text" id="probeTarget" class="grow" placeholder="域名、IP 或网址，如 www.example.com" spellcheck="false">
-      <select id="probeType">
-        <option value="ping" selected>Ping</option>
-        <option value="http">网站测速 (HTTP)</option>
-      </select>
-      <select id="probeLimit">
-        <option value="5">5 个探针</option>
-        <option value="10" selected>10 个探针</option>
-        <option value="20">20 个探针</option>
-      </select>
-      <button class="btn primary" id="probeBtn">开始评测</button>
+
+    <div id="pingServerBlock">
+      <div class="quick">
+        <span id="pingOwnIpChip" hidden>我的 IP</span>
+        <span onclick="setTarget('pingHost','www.baidu.com')">baidu.com</span>
+        <span onclick="setTarget('pingHost','www.qq.com')">qq.com</span>
+        <span onclick="setTarget('pingHost','1.1.1.1')">1.1.1.1</span>
+      </div>
+      <div class="controls">
+        <input type="text" id="pingHost" class="grow" placeholder="域名或 IP，如 www.example.com" spellcheck="false">
+        <input type="number" id="pingPort" value="443" min="1" max="65535" style="width:80px" title="TCP 端口">
+        <select id="pingCount">
+          <option value="4" selected>4 次</option>
+          <option value="8">8 次</option>
+          <option value="10">10 次</option>
+        </select>
+        <button class="btn primary" id="pingBtn">开始检测</button>
+      </div>
+      <div class="hint">基于 TCP 握手模拟 Ping（服务器节点发起），443=HTTPS / 80=HTTP</div>
+      <div class="error" id="pingError" hidden></div>
+      <div class="summary" id="pingSummary" hidden></div>
+      <div class="console" id="pingConsole" hidden></div>
     </div>
-    <div class="hint">全国测试使用中国区社区探针、全球测试使用全球探针（Globalping 网络）；Ping 发 4 个 ICMP 包，网站测速走 HTTPS GET /。结果逐探针实时刷新。</div>
-    <div class="error" id="probeError" hidden></div>
-    <div class="summary" id="probeSummary" hidden></div>
-    <div id="probeResults"></div>
+
+    <div id="pingProbeBlock" hidden>
+      <div class="quick">
+        <span onclick="setTarget('probeTarget','www.baidu.com')">baidu.com</span>
+        <span onclick="setTarget('probeTarget','www.qq.com')">qq.com</span>
+        <span onclick="setTarget('probeTarget','github.com')">github.com</span>
+      </div>
+      <div class="controls">
+        <input type="text" id="probeTarget" class="grow" placeholder="域名、IP 或网址，如 www.example.com" spellcheck="false">
+        <select id="probeType">
+          <option value="ping" selected>Ping</option>
+          <option value="http">网站测速 (HTTP)</option>
+        </select>
+        <select id="probeLimit">
+          <option value="5">5 个探针</option>
+          <option value="10" selected>10 个探针</option>
+          <option value="20">20 个探针</option>
+        </select>
+        <button class="btn primary" id="probeBtn">开始评测</button>
+      </div>
+      <div class="hint">全国测试使用中国区社区探针、全球测试使用全球探针（Globalping 网络）；Ping 发 4 个 ICMP 包，网站测速走 HTTPS GET /。结果逐探针实时刷新。</div>
+      <div class="error" id="probeError" hidden></div>
+      <div class="summary" id="probeSummary" hidden></div>
+      <div id="probeResults"></div>
+    </div>
   </section>
 
   <!-- DNS -->
@@ -753,13 +755,17 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
   $('#pingBtn').addEventListener('click', runPing);
   $('#pingHost').addEventListener('keydown', function (e) { if (e.key === 'Enter') runPing(); });
 
-  /* ---------------- 评测（Globalping 探针：全国 / 全球） ---------------- */
+  /* ---------------- Ping 页三种模式（服务器 / 全国探针 / 全球探针） ---------------- */
   var probeRunning = false;
   var probeScope = 'cn';
-  document.querySelectorAll('#panel-probe .subtab').forEach(function (s) {
+  var pingMode = 'server';
+  document.querySelectorAll('#panel-ping .subtab').forEach(function (s) {
     s.addEventListener('click', function () {
-      document.querySelectorAll('#panel-probe .subtab').forEach(function (x) { x.classList.toggle('active', x === s); });
-      probeScope = s.getAttribute('data-scope');
+      document.querySelectorAll('#panel-ping .subtab').forEach(function (x) { x.classList.toggle('active', x === s); });
+      pingMode = s.getAttribute('data-pmode');
+      probeScope = pingMode === 'global' ? 'global' : 'cn';
+      $('#pingServerBlock').hidden = pingMode !== 'server';
+      $('#pingProbeBlock').hidden = pingMode === 'server';
     });
   });
   var probeCityZh = { 'Beijing':'北京','Shanghai':'上海','Guangzhou':'广州','Shenzhen':'深圳','Hangzhou':'杭州','Nanjing':'南京','Suzhou':'苏州','Chengdu':'成都','Chongqing':'重庆','Wuhan':'武汉',"Xi'an":'西安','Xian':'西安','Qingdao':'青岛','Jinan':'济南','Xiamen':'厦门','Fuzhou':'福州','Changsha':'长沙','Zhengzhou':'郑州','Shenyang':'沈阳','Dalian':'大连','Harbin':'哈尔滨','Tianjin':'天津','Hefei':'合肥','Kunming':'昆明','Lishui':'丽水','Wuxi':'无锡','Ningbo':'宁波','Dongguan':'东莞','Foshan':'佛山' };
@@ -895,14 +901,19 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
     sum.hidden = false;
   }
 
+  function probeShowError(msg) {
+    var box = $('#probeError');
+    box.textContent = msg;
+    box.hidden = false;
+  }
+
   async function runProbe() {
     if (probeRunning) return;
-    var panel = $('#panel-probe');
-    clearPanel(panel);
+    $('#probeError').hidden = true;
     var type = $('#probeType').value;
     var limit = parseInt($('#probeLimit').value, 10) || 10;
     var norm = normalizeProbeTarget(type, $('#probeTarget').value);
-    if (!norm || !norm.target) { showError(panel, '请输入有效的目标'); return; }
+    if (!norm || !norm.target) { probeShowError('请输入有效的目标'); return; }
     var payload = {
       type: type,
       target: norm.target,
@@ -947,7 +958,7 @@ html[data-theme="light"] .tag-c-gray{color:#475569;border-color:#94a3b8;}
       renderProbeTable(box, type, data);
       renderProbeSummary(type, data);
     } catch (e) {
-      showError(panel, '评测失败：' + e.message);
+      probeShowError('评测失败：' + e.message);
     } finally {
       probeRunning = false;
       busy($('#probeBtn'), false);
